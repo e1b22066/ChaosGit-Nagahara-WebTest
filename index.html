@@ -5,70 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>xterm.js Terminal</title>
   <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
-  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
 </head>
 <body>
   <div id="terminal"></div>
-  <script>
-    const term = new Terminal({
-      shell: '/bin/bash',
-      convertEol: true
-    });
-    term.open(document.getElementById('terminal'));
-    
-    const socket = new WebSocket('ws://localhost:8080');
-    let buffer = ''; // 入力文字列をバッファリングするための変数
-    let promptShown = false; // プロンプトが表示されているかどうかを示すフラグ
-
-    function writePrompt() {
-      term.write('\x1b[38;2;0;255;0m')
-      term.write('WebTerm> ');
-      term.write('\x1b[0m');
-      promptShown = true;
-    }
-
-    writePrompt();
-    socket.addEventListener('open', function (event) {
-
-      // エンターキーが押されたときの処理
-      term.onKey(function (e) {
-        if (e.domEvent.keyCode === 13) {
-
-          // バッファの内容を送信
-          socket.send(buffer);
-          // バッファをクリア
-          buffer = '';
-        }
-      });
-
-      socket.addEventListener('message', function (event) {
-        // サーバーからのメッセージをターミナルに表示
-        term.write('\n' + event.data);
-
-        // プロンプトを表示
-        writePrompt();
-      });
-
-      // 入力文字列をターミナルに書き込む
-      term.onData(function (data) {
-        if (data === '\r') {
-          // Enterキーが押されたときはバッファに追加しない
-          return;
-        }
-        if (data == '\x7f') {
-          // バックスペースキーが押されたときはバッファから1文字削除
-          if (buffer.length > 0) {
-            buffer = buffer.slice(0, -1);
-            // ターミナル上の文字を削除
-            term.write('\b \b');
-          }
-          return;
-        }
-        buffer += data;
-        term.write(data);
-      });
-
-    });
-  </script>
+  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+  <script src="term.js"></script>
 </body>
 </html>
