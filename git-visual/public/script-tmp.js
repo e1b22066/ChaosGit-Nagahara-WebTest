@@ -22,9 +22,9 @@ function drawGraph(commits) {
          .text(d => `${d.author}\n${d.date}\n${d.message}`)
          .attr("x", 30)
          .attr("y", -15)
-         .attr("text-anchor", "middle")
+         .attr("text-anchor", "right")
          .attr("fill", "black")
-         .attr("font-size", "10px")
+         .attr("font-size", "13px")
          .attr("class", "node-text")
          .style("visibility", "hidden");
 
@@ -38,7 +38,7 @@ function drawGraph(commits) {
     // エッジの描画
     for (let i = 0; i < commits.length - 1; i++) {
         const startY = (i * 100) + 50 + 20; // 始点の y 座標をノードの中心に
-        const endY = ((i + 1) * 100) + 50; // 終点の y 座標を次のノードの中心に
+        const endY = ((i + 1) * 100) + 30; // 終点の y 座標を次のノードの中心に
 
         svg.append("line")
            .attr("x1", 100)
