@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>xterm.js Terminal</title>
-  <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xterm.js Terminal</title>
+    <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
 </head>
 <body>
-  <div id="terminal"></div>
-  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
-  <script src="term.js"></script>
+    <div id="editor" style="height: 600px"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
+    <script src="editor.js"></script>
+    <div id="terminal"></div>
+    <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+    <script src="term.js"></script>
 </body>
 </html>
