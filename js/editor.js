@@ -12,7 +12,7 @@ var editorOptions = {
     // エディタの行数を自動調整する設定
     autoScrollEditorIntoView: true,
 };
-
+//
 // Ace Editorを生成し、設定を適用
 var editor = ace.edit(editorElement);
 editor.setOptions(editorOptions);
