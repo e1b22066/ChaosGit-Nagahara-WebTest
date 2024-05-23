@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Git Commit Graph</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .node {
+      fill: #1f77b4;
+      stroke: #fff;
+      stroke-width: 1.5px;
+    }
+    .link {
+      fill: none;
+      stroke-width: 2px;
+    }
+    .tooltip {
+      position: absolute;
+      text-align: center;
+      padding: 5px;
+      font: 12px sans-serif;
+      background: lightsteelblue;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      pointer-events: none;
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="graph-container"></div>
+  <div id="tooltip" class="tooltip"></div>
+  <script>
+    d3.json('d3_data.json').then(function(data) {
+      const width = 800;
+      const height = 1000;
+      const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+
+      const svg = d3.select("#graph-container").append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const tooltip = d3.select("#tooltip");
+
+      const xScale = d3.scalePoint()
+          .domain([...new Set(data.nodes.map(d => d.branch))])
+          .range([0, width - margin.left - margin.right])
+          .padding(1);
+
+      const yScale = d3.scaleBand()
+          .domain(data.nodes.map(d => d.id))
+          .range([0, height - margin.top - margin.bottom])
+          .padding(0.1);
+
+      const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+      const link = svg.append("g")
+          .attr("class", "links")
+        .selectAll("line")
+        .data(data.links)
+        .enter().append("line")
+          .attr("class", "link")
+          .attr("x1", d => xScale(data.nodes.find(node => node.id === d.source).branch))
+          .attr("y1", d => yScale(d.source))
+          .attr("x2", d => xScale(data.nodes.find(node => node.id === d.target).branch))
+          .attr("y2", d => yScale(d.target))
+          .attr("stroke", d => color(data.nodes.find(node => node.id === d.source).branch));
+
+      const node = svg.append("g")
+          .attr("class", "nodes")
+        .selectAll("circle")
+        .data(data.nodes)
+        .enter().append("circle")
+          .attr("class", "node")
+          .attr("r", 5)
+          .attr("cx", d => xScale(d.branch))
+          .attr("cy", d => yScale(d.id))
+          .attr("fill", d => color(d.branch))
+          .on("mouseover", function(event, d) {
+            tooltip.html(`Commit: ${d.id}<br>Author: ${d.author}<br>Date: ${d.date}<br>Message: ${d.message}`)
+              .style("visibility", "visible");
+          })
+          .on("mousemove", function(event) {
+            tooltip.style("top", (event.pageY - 10) + "px")
+              .style("left", (event.pageX + 10) + "px");
+          })
+          .on("mouseout", function() {
+            tooltip.style("visibility", "hidden");
+          });
+
+      node.append("title")
+          .text(d => d.id);
+    });
+  </script>
+</body>
+</html>
