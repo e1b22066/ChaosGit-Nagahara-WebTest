@@ -1,0 +1,105 @@
+{
+  "commit": "9981e4a46d35e2a48f9d62acbd5f870ac7ff11b7",
+  "author": "dagechan",
+  "date": "Wed May 15 22:43:14 2024 +0900",
+  "message": "Ace.jsでファイル内容出力を実装",
+  "parents": "299f822125bf90bbab24c6926cc7963372efe1a4"
+},
+{
+  "commit": "299f822125bf90bbab24c6926cc7963372efe1a4",
+  "author": "dagechan",
+  "date": "Thu May 9 14:41:44 2024 +0900",
+  "message": "update pptx file",
+  "parents": "ff3f9997b3b35f95b79094e617a219fe5f107dd4"
+},
+{
+  "commit": "ff3f9997b3b35f95b79094e617a219fe5f107dd4",
+  "author": "dagechan",
+  "date": "Thu May 9 12:39:50 2024 +0900",
+  "message": "コミットグラフの改善とファイル編集機能の模索",
+  "parents": "bc3cec8884c839edf3db1b67284700f8a7da6146"
+},
+{
+  "commit": "bc3cec8884c839edf3db1b67284700f8a7da6146",
+  "author": "dagechan",
+  "date": "Thu May 9 12:12:29 2024 +0900",
+  "message": "コミットグラフの改善とファイル編集機能の模索",
+  "parents": "b0205a783716513260430bc46f60162541ed3258"
+},
+{
+  "commit": "b0205a783716513260430bc46f60162541ed3258",
+  "author": "Dagechan",
+  "date": "Tue May 7 17:04:30 2024 +0900",
+  "message": "node_modulesを追跡しないようにする",
+  "parents": "4e317424d85214c5394071abfd0f99a3862c3db6"
+},
+{
+  "commit": "4e317424d85214c5394071abfd0f99a3862c3db6",
+  "author": "Dagechan",
+  "date": "Thu May 2 16:38:03 2024 +0900",
+  "message": "Merge pull request #4 from igakilab/0425-0502",
+  "parents": "0cb7cf70c4fb5653f52bf6e80b3aa12d0ad81592 a261ffb96b0813e7d49da65e4c041e5125de92ca"
+},
+{
+  "commit": "a261ffb96b0813e7d49da65e4c041e5125de92ca",
+  "author": "dagechan",
+  "date": "Thu May 2 13:47:34 2024 +0900",
+  "message": "マージ機能の追加とpptxファイルの追加",
+  "parents": "0cb7cf70c4fb5653f52bf6e80b3aa12d0ad81592"
+},
+{
+  "commit": "0cb7cf70c4fb5653f52bf6e80b3aa12d0ad81592",
+  "author": "Dagechan",
+  "date": "Sun Apr 28 23:10:01 2024 +0900",
+  "message": "Merge pull request #3 from igakilab/0418-0425",
+  "parents": "395421dec48ebba20ed2384d6c30d41ea293b305 ae5380ba4e697c3585443b3990c61b50b08d2d37"
+},
+{
+  "commit": "ae5380ba4e697c3585443b3990c61b50b08d2d37",
+  "author": "dagechan",
+  "date": "Thu Apr 25 00:34:32 2024 +0900",
+  "message": "D3.jsからgitgraph.jsにライブラリ変更",
+  "parents": "6e7b89bdfea31f6c338352b0bde1510745eae71d"
+},
+{
+  "commit": "6e7b89bdfea31f6c338352b0bde1510745eae71d",
+  "author": "dagechan",
+  "date": "Thu Apr 18 14:34:22 2024 +0900",
+  "message": "ファイル名変更",
+  "parents": "cf0ae9da1347ec67f720d4f7c4f173a7644ab38e"
+},
+{
+  "commit": "cf0ae9da1347ec67f720d4f7c4f173a7644ab38e",
+  "author": "dagechan",
+  "date": "Thu Apr 18 14:34:07 2024 +0900",
+  "message": "ファイル名変更",
+  "parents": "5cc164f6e7108573b846e72a23c59e42da4b57ae"
+},
+{
+  "commit": "5cc164f6e7108573b846e72a23c59e42da4b57ae",
+  "author": "dagechan",
+  "date": "Thu Apr 18 13:45:54 2024 +0900",
+  "message": "コミットツリー機能テストファイル追加",
+  "parents": "a5f7030e5f5e0e759ce2278f8a7205d14e5fcef7"
+},
+{
+  "commit": "395421dec48ebba20ed2384d6c30d41ea293b305",
+  "author": "Dagechan",
+  "date": "Thu Apr 11 11:24:33 2024 +0900",
+  "message": "Merge pull request #1 from igakilab/dev",
+  "parents": "e84ac8fa3e0d13df30ef662cdd23644c4eefc14a a5f7030e5f5e0e759ce2278f8a7205d14e5fcef7"
+},
+{
+  "commit": "a5f7030e5f5e0e759ce2278f8a7205d14e5fcef7",
+  "author": "dagechan",
+  "date": "Thu Apr 11 11:22:36 2024 +0900",
+  "message": "htmlファイルに組み込まれたscriptをjavascriptファイルに分割",
+  "parents": "e84ac8fa3e0d13df30ef662cdd23644c4eefc14a"
+},
+{
+  "commit": "e84ac8fa3e0d13df30ef662cdd23644c4eefc14a",
+  "author": "dagechan",
+  "date": "Thu Apr 4 23:20:24 2024 +0900",
+  "message": "first commit",
+  "parents": ""
+},
