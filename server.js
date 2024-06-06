@@ -3,13 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const bodyParser = require('body-parser');
 const WebSocket = require('ws');
-const cors = require('cors'); // cors パッケージを追加
+const cors = require('cors');
 
 const app = express();
 app.use(bodyParser.json());
-app.use(cors()); // CORS を有効にする
+app.use(cors());
 
-const filesDirectory = '/home/takeaki';
+const filesDirectory = '';
 
 const wss = new WebSocket.Server({ port: 8080 });
 
@@ -21,15 +21,43 @@ app.get('/files', (req, res) => {
 app.get('/file/:filename', (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(filesDirectory, filename);
-    const content = fs.readFileSync(filePath, 'utf-8');
-    res.send(content);
+    fs.readFile(filePath, 'utf-8', (err, content) => {
+        if (err) {
+            res.status(500).send(`Error reading file: ${err.message}`);
+        } else {
+            res.send(content);
+        }
+    });
 });
 
 app.post('/file/save', (req, res) => {
     const { filename, content } = req.body;
     const filePath = path.join(filesDirectory, filename);
-    fs.writeFileSync(filePath, content);
-    res.send('File saved successfully');
+    fs.writeFile(filePath, content, (err) => {
+        if (err) {
+            res.status(500).send(`Error saving file: ${err.message}`);
+        } else {
+            res.send('File saved successfully');
+        }
+    });
+});
+
+app.get('/file-tree', (req, res) => {
+    const dirPath = decodeURIComponent(req.query.dir || filesDirectory);
+    fs.readdir(dirPath, { withFileTypes: true }, (err, items) => {
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            const result = items
+                .filter(item => !item.name.startsWith('.'))  // 隠しファイルを除外
+                .map(item => ({
+                    name: item.name,
+                    path: path.join(dirPath, item.name),
+                    isDirectory: item.isDirectory()
+                }));
+            res.json(result);
+        }
+    });
 });
 
 wss.on('connection', function connection(ws) {

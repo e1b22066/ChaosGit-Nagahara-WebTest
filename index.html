@@ -3,12 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>xterm.js Terminal</title>
+    <title>ファイルエディター</title>
     <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        #fileList {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        #fileList li {
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        #fileList li i {
+            margin-right: 8px;
+        }
+        #fileList li:hover {
+            background-color: #f0f0f0;
+        }
+        #saveModal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        #saveModalContent {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            position: relative;
+        }
+        #saveFileList {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #saveFileList li {
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        #saveFileList li i {
+            margin-right: 8px;
+        }
+        #saveFileList li:hover {
+            background-color: #f0f0f0;
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <button id="filePickerButton">ファイラー</button>
+    <button id="filePickerButton">開く</button>
     <ul id="fileList"></ul>
+    <div id="currentDir" style="display:none">/home/takeaki/</div>
     <div id="selectedFile"></div>
     <button id="saveButton">保存</button>
     <div id="editor" style="height: 600px"></div>
@@ -18,5 +98,14 @@
     <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
     <script src="./js/term.js"></script>
     <script src="./js/file.js"></script>
+
+    <div id="saveModal">
+        <div id="saveModalContent">
+            <span class="close">&times;</span>
+            <ul id="saveFileList"></ul>
+            <input type="text" id="saveFileName" placeholder="ファイル名を入力" />
+            <button id="confirmSaveButton">保存</button>
+        </div>
+    </div>
 </body>
 </html>
