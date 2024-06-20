@@ -4,6 +4,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const WebSocket = require('ws');
 const cors = require('cors');
+const pty = require('node-pty'); // Add this
 
 const app = express();
 app.use(bodyParser.json());
@@ -61,23 +62,25 @@ app.get('/file-tree', (req, res) => {
 });
 
 wss.on('connection', function connection(ws) {
-    const { spawn } = require('child_process');
-    const shell = spawn('bash');
+    // Spawn a pseudo-terminal
+    const shell = pty.spawn('bash', [], {
+        name: 'xterm-color',
+        cols: 80,
+        rows: 30,
+        cwd: process.env.HOME,
+        env: process.env
+    });
+
+    shell.on('data', function (data) {
+        ws.send(data);
+    });
 
     ws.on('message', function incoming(message) {
-        shell.stdin.write(message + '\n');
+        shell.write(message);
     });
 
-    shell.stdout.on('data', function (data) {
-        ws.send(data.toString());
-    });
-
-    shell.stderr.on('data', function (data) {
-        ws.send(data.toString());
-    });
-
-    shell.on('close', function (code) {
-        ws.close();
+    ws.on('close', function () {
+        shell.kill();
     });
 });
 
