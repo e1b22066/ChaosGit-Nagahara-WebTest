@@ -9,15 +9,16 @@
     <link rel="styleSheet" href="./css/style.css" />
 </head>
 <body>
-    <button id="filePickerButton">開く</button>
     <ul id="fileList"></ul>
-    <div id="currentDir" style="display:none">/home/takeaki/</div>
+    <div id="currentDir" style="display:none">~/takeaki/Documents/Development/Last-project/</div>
     <div id="selectedFile"></div>
     <button id="saveButton">保存</button>
-    <div id="editor" style="height: 600px"></div>
+    <button id="githubButton" onclick="window.open('https://github.com/Dagechan/chaos-repo')">GitHub</button>
+    <!-- <div id="editor" style="height: 600px"></div> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
     <script src="./js/editor.js"></script>
     <div id="terminal"></div>
+    <button id="filePickerButton">開く</button>
     <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
     <script src="./js/term.js"></script>
     <script src="./js/file.js"></script>
