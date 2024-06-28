@@ -12,7 +12,7 @@ app.use(cors());
 
 const filesDirectory = '';
 
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: 6060 });
 
 app.get('/files', (req, res) => {
     const files = fs.readdirSync(filesDirectory);
@@ -65,8 +65,8 @@ wss.on('connection', function connection(ws) {
     // Spawn a pseudo-terminal
     const shell = pty.spawn('bash', [], {
         name: 'xterm-color',
-        cols: 80,
-        rows: 30,
+        // cols: 80,
+        // rows: 30,
         cwd: process.env.HOME,
         env: process.env
     });
