@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@gitgraph/js": "^1.4.0",
+    "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.4.0",
     "body-parser": "^1.20.2",
     "child_process": "^1.0.2",

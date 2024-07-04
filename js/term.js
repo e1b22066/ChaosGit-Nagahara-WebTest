@@ -1,11 +1,12 @@
 const term = new Terminal({
     convertEol: true,
     cursorBlink: true,
-    rows: 30,
-    cols: 80,
     fontSize: 14,
+    rows: 35,
+    cols: 80,
     fontFamily: 'monospace'
 });
+
 term.open(document.getElementById('terminal'));
 
 const socket = new WebSocket('ws://localhost:6060');
