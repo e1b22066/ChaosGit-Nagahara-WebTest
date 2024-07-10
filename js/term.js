@@ -1,47 +1,45 @@
 const term = new Terminal({
-    shell: '/bin/bash',
-    convertEol: true
+    convertEol: true,
+    cursorBlink: true,
+    fontSize: 14,
+    rows: 35,
+    cols: 80,
+    fontFamily: 'monospace'
 });
+
 term.open(document.getElementById('terminal'));
 
-const socket = new WebSocket('ws://localhost:8080');
-let buffer = '';
-let promptShown = false;
+const socket = new WebSocket('ws://localhost:6060');
 
-function writePrompt() {
-    term.write('\x1b[38;2;0;255;0m')
-    term.write('WebTerm> ');
-    term.write('\x1b[0m');
-    promptShown = true;
-}
-
-writePrompt();
 socket.addEventListener('open', function (event) {
     term.onKey(function (e) {
-        if (e.domEvent.keyCode === 13) {
-            socket.send(buffer);
-            buffer = '';
+        const printable = !e.domEvent.altKey && !e.domEvent.altGraphKey &&
+                          !e.domEvent.ctrlKey && !e.domEvent.metaKey &&
+                          e.key !== 'Dead' && e.key !== 'Escape';
+        
+        if (e.domEvent.ctrlKey) {
+            // Case: entered Ctrl key
+            switch (key) {
+                case 'c':
+                case 'C':
+                    socket.send('\x03');
+                    break;
+                case 'x':
+                case 'X':
+                    socket.send('\x18');
+                    break;
+                default:
+                    break;
+        }
+        } else if (e.domEvent.keyCode === 13 || e.domEvent.keyCode === 8) {
+            socket.send(e.key);  // Send Enter key & backspace key
+        } else if (printable) {
+            socket.send(e.key);
         }
     });
+
 
     socket.addEventListener('message', function (event) {
-        term.write('\n' + event.data);
-        writePrompt();
-    });
-
-    term.onData(function (data) {
-        if (data === '\r') {
-            return;
-        }
-
-        if (data == '\x7f') {
-            if (buffer.length > 0) {
-                buffer = buffer.slice(0, -1);
-                term.write('\b \b');
-            }
-            return;
-        }
-        buffer += data;
-        term.write(data);
+        term.write(event.data);
     });
 });

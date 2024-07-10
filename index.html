@@ -3,33 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>webTerm</title>
-    <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
+    <title>Chaos repository</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-    <link rel="styleSheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-    <ul id="fileList"></ul>
-    <div id="currentDir" style="display:none">~/takeaki/Documents/Development/Last-project/</div>
-    <div id="selectedFile"></div>
-    <button id="saveButton">保存</button>
     <button id="githubButton" onclick="window.open('https://github.com/Dagechan/chaos-repo')">GitHub</button>
-    <!-- <div id="editor" style="height: 600px"></div> -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
-    <script src="./js/editor.js"></script>
+    <button id="chaosButton">Destroy .git Directory</button>
     <div id="terminal"></div>
-    <button id="filePickerButton">開く</button>
-    <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
     <script src="./js/term.js"></script>
-    <script src="./js/file.js"></script>
-
-    <div id="saveModal">
-        <div id="saveModalContent">
-            <span class="close">&times;</span>
-            <ul id="saveFileList"></ul>
-            <input type="text" id="saveFileName" placeholder="ファイル名を入力" />
-            <button id="confirmSaveButton">保存</button>
-        </div>
-    </div>
 </body>
 </html>
