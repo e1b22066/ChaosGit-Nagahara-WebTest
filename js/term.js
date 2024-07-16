@@ -33,6 +33,10 @@ socket.addEventListener('open', function (event) {
         }
         } else if (e.domEvent.keyCode === 13 || e.domEvent.keyCode === 8) {
             socket.send(e.key);  // Send Enter key & backspace key
+        } else if (e.key == 'Escape') {
+            socket.send('\x1b');
+        // } else if (e.key == 'Control') {
+        //     socket.send('\x03');
         } else if (printable) {
             socket.send(e.key);
         }
@@ -42,4 +46,13 @@ socket.addEventListener('open', function (event) {
     socket.addEventListener('message', function (event) {
         term.write(event.data);
     });
+});
+
+document.getElementById('executeScriptButton').addEventListener('click', function () {
+    const cd = 'cd ~/Documents/Development/Last-project/shell-scripts\n';
+    const execute = './touchFile.sh\n';
+    const reCd = 'cd -\n';
+    socket.send(cd);
+    socket.send(execute);
+    socket.send(reCd);
 });

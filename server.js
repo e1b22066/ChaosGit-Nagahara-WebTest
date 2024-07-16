@@ -30,6 +30,19 @@ app.post('/rmGitdir', (req, res) => {
     });
 });
 
+app.post('/execute-script', (req, res) => {
+    const scriptPath = './shell-scripts/touchFile.sh';
+
+    exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing script: ${error}`);
+            return res.json({ success: false, error: stderr });
+        }
+        console.log(`Script output: ${stdout}`);
+        res.json({ success: true });
+    });
+});
+
 // app.get('/file/:filename', (req, res) => {
 //     const filename = req.params.filename;
 //     const filePath = path.join(filesDirectory, filename);
