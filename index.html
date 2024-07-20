@@ -10,10 +10,21 @@
 </head>
 <body>
     <button id="githubButton" onclick="window.open('https://github.com/Dagechan/chaos-repo')">GitHub</button>
-    <button id="chaosButton">Destroy .git Directory</button>
+    <button id="sabotageButton">sabotage</button>
+    <div id="overlay" class="overlay"></div>
+    <div id="popup" class="popup">
+        <h2>Sabotage list</h2>
+        <button id="addStrangeFileButton">不要なファイルの追加</button>
+        <button id="destroyRepositoryButton">.gitディレクトリの削除</button>
+        <button id="rewriteRemoteURL">リモートリポジトリのURLの書き換え</button>
+        <button id="closePopupButton">Close</button>
+    </div>
+
     <div id="terminal"></div>
     <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.js"></script>/>
     <script src="./js/term.js"></script>
+    <script src="./js/popup-sabo.js"></script>
 </body>
 </html>
