@@ -73,3 +73,12 @@ document.getElementById('rewriteRemoteURL').addEventListener('click', function (
     socket.send(execute);
     socket.send(reCd);
 });
+
+function closeTerminal() {
+    if (socket) {
+        socket.close();
+    }
+    if (terminal) {
+        terminal.clear();
+    }
+}
