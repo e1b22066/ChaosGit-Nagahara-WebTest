@@ -1,11 +1,11 @@
-const express = require('express');
-const { exec } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const bodyParser = require('body-parser');
-const WebSocket = require('ws');
-const cors = require('cors');
-const pty = require('node-pty'); // Add this
+import express from 'express';
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import bodyParser from 'body-parser';
+import WebSocket, { WebSocketServer } from 'ws'; 
+import cors from 'cors';
+import pty from 'node-pty';
 
 const app = express();
 app.use(bodyParser.json());
@@ -13,7 +13,7 @@ app.use(cors());
 
 const filesDirectory = '';
 
-const wss = new WebSocket.Server({ port: 6060 });
+const wss = new WebSocketServer({ port: 6060 });
 
 app.get('/files', (req, res) => {
     const files = fs.readdirSync(filesDirectory);

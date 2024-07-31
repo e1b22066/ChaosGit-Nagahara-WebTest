@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chaos repository</title>
+    <title>Chaos crewmate</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -20,11 +20,16 @@
         <button id="closePopupButton">Close</button>
     </div>
 
-    <div id="terminal"></div>
+    <div id="game-container">
+        <button id="toggle-terminal-button">Terminal</button>
+        <div id="terminal" style="display: none"></div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.js"></script>/>
     <script src="./js/term.js"></script>
+    <script src="./js/game.js"></script>
     <script src="./js/popup-sabo.js"></script>
+    <script src="./js/toggle-terminal.js"></script>
 </body>
 </html>
