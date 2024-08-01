@@ -74,6 +74,27 @@ document.getElementById('rewriteRemoteURL').addEventListener('click', function (
     socket.send(reCd);
 });
 
+document.getElementById('createBranchButton').addEventListener('click', function () {
+    const execute = './createBranch.sh\n';
+    socket.send(cd);
+    socket.send(execute);
+    socket.send(reCd);
+});
+
+document.getElementById('rmRemoteBranchButton').addEventListener('click', function () {
+    const execute = './rmRemoteBr.sh\n';
+    socket.send(cd);
+    socket.send(execute);
+    socket.send(reCd);
+});
+
+document.getElementById('resetButton').addEventListener('click', function () {
+    const execute = './reset.sh\n';
+    socket.send(cd);
+    socket.send(execute);
+    socket.send(reCd);
+});
+
 function closeTerminal() {
     if (socket) {
         socket.close();
