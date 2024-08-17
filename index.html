@@ -10,7 +10,9 @@
 </head>
 <body>
     <button id="sabotageButton">sabotage</button>
-    <button id="open-terminal">terminal</button>
+    <!-- <button id="open-terminal">terminal</button> -->
+    <div id="terminal" style="display: none;"></div>
+
     <div id="overlay" class="overlay"></div>
     <div id="popup" class="popup">
         <h2>Sabotage list</h2>
@@ -23,8 +25,7 @@
         <button id="closePopupButton">Close</button>
     </div>
 
-    <div id="game-container">
-    </div>
+    <div id="game-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.js"></script>
