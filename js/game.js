@@ -1,16 +1,17 @@
-// import Phaser from 'phaser';
+// このシステムで使うシーンをインポート
+import { TitleScene } from './scenes/TitleScene.js';
+import { MainGameScene } from './scenes/MainGameScene.js';
+import { DiscussionScene } from './scenes/DiscussionScene.js';
+import { QuizScene } from './scenes/QuizScene.js';
 
+// ゲームの設定
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
     backgroundColor: '#024578',
     parent: 'game-container',
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    },
+    scene: [TitleScene, MainGameScene, DiscussionScene, QuizScene],  // インポートしたシーンを設定
     physics: {
         default: 'arcade',
         arcade: {
@@ -19,33 +20,5 @@ const config = {
     }
 };
 
+// Phaser.Gameオブジェクトを作った瞬間にゲームが開始される
 const game = new Phaser.Game(config);
-let player;
-let cursors;
-
-function preload() {
-    this.load.image('player', 'https://examples.phaser.io/assets/sprites/phaser-dude.png');
-}
-
-function create() {
-    player = this.physics.add.sprite(400, 300, 'player');
-    player.setCollideWorldBounds(true);
-
-    cursors = this.input.keyboard.createCursorKeys();
-}
-
-function update() {
-    player.setVelocity(0);
-
-    if (cursors.left.isDown) {
-        player.setVelocityX(-160);
-    } else if (cursors.right.isDown) {
-        player.setVelocityX(160);
-    }
-
-    if (cursors.up.isDown) {
-        player.setVelocityY(-160);
-    } else if (cursors.down.isDown) {
-        player.setVelocityY(160);
-    }
-}
