@@ -8,6 +8,10 @@ export class DiscussionScene extends Phaser.Scene {
         this.load.image('dummy-button', '../../assets/images/dummy-button.png');
     }
 
+    init(data) {
+        this.timerDuration = 10; // 毎回初期化
+    }
+
     create() {
         // ディスカッション開始のメッセージ表示
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Discussion Time!', {
