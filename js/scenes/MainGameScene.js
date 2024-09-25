@@ -60,12 +60,7 @@ export class MainGameScene extends Phaser.Scene {
     // }
 
     openTerminal() {
-        // term.jsの関数を呼び出す
-        if (typeof initializeTerminal === 'function') {
-            initializeTerminal();
-        } else {
-            console.error('Failed to initialize terminal: initializeTerminal function not found.');
-        }
+        window.open('../../term.html', '_blank');
     }
 
     // closeTerminal() {
