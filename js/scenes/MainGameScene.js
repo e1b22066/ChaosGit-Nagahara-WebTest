@@ -13,14 +13,18 @@ export class MainGameScene extends Phaser.Scene {
         this.load.image('closeButton', '../../assets/images/terminal-button.png');
         this.load.image('reportButton', '../../assets/images/report-button.png');
         this.load.image('close-term-button', '../../assets/images/close-term-button.png');
+        this.load.image('close-button', '../../assets/images/close.png');
+        this.load.image('task-window', '../../assets/images/task-window.png');
+        this.load.image('hint', '../../assets/images/hint.png');
     }
 
     create() {
         this.createGitHubButton(); // GitHubボタンを作成
-        this.createTaskButton();   // Taskボタンを作成
+        this.createTaskButton(this.cameras.main.centerX + 100, this.cameras.main.centerY, 0.2, 'リモートリポジトリを　クローンしてください');   // Taskボタンを作成１
+        this.createTaskButton(this.cameras.main.centerX - 300, this.cameras.main.centerY - 10, 0.2, 'ブランチ名をmasterからmainに　変更してください');  // Taskボタンを作成2
+        this.createTaskButton(this.cameras.main.centerX - 100, this.cameras.main.centerY - 160, 0.2, 'ターミナル上で　コミット履歴を確認してください');  // Taskボタンを作成3
         this.createTerminalButton(); // Terminalボタンを作成
         this.createReportButton(); // Reportボタンを作成
-        // this.createSabotageButton(); // Sabotageボタンを作成
         this.createPlayer();       // プレイヤーを作成
         this.createMessageWindow(); // メッセージウィンドウを作成
         this.setupInput();         // 入力設定
@@ -46,30 +50,9 @@ export class MainGameScene extends Phaser.Scene {
             .on('pointerdown', () => this.openTerminal());
     }
 
-    // toggleTerminal() {
-    //     if (this.terminalVisible) {
-    //         // ターミナルを閉じる
-    //         this.closeTerminal();
-    //         this.terminalButton.setTexture('terminalButton'); // ボタンを元に戻す
-    //     } else {
-    //         // ターミナルを開く
-    //         this.openTerminal();
-    //         this.terminalButton.setTexture('closeButton'); // ボタンを閉じるボタンに変更する
-    //     }
-    //     this.terminalVisible = !this.terminalVisible; // 状態を切り替える
-    // }
-
     openTerminal() {
         window.open('../../term.html', '_blank');
     }
-
-    // closeTerminal() {
-    //     if (typeof closeTerminal === 'function') {
-    //         closeTerminal();
-    //     } else {
-    //         console.error('Failed to close terminal: closeTerminal function not found.');
-    //     }
-    // }
 
     createMessageWindow() {
         this.messageWindow = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY + 300, 'message')
@@ -91,15 +74,64 @@ export class MainGameScene extends Phaser.Scene {
             .on('pointerdown', () => this.handleButtonClick());
     }
 
-    createTaskButton() {
-        const buttonScale = 0.2;
+    // 位置とスケール，タスク内容を引数に渡すことによってタスクボタンを作成
+
+    createTaskButton(x, y, scale, message) {
+        const buttonScale = scale || 0.2;
         const buttonWidth = this.textures.get('Task').getSourceImage().width * buttonScale;
         const buttonHeight = this.textures.get('Task').getSourceImage().height * buttonScale;
-
-        this.add.image(this.cameras.main.centerX + 100, this.cameras.main.centerY, 'Task')
+    
+        this.add.image(x, y, 'Task')
             .setInteractive()
             .setScale(buttonScale)
-            .on('pointerdown', () => this.showMessage('main.cというファイルを作成して　コミットを作成してください'));
+            .on('pointerdown', () => this.showTaskWindow(message));
+    }
+    
+    showTaskWindow(message) {
+        // タスクウィンドウを表示
+        const taskWindowScale = 0.3;
+        this.taskWindow = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'task-window')
+            .setInteractive()
+            .setScale(taskWindowScale);
+
+        // タスクウィンドウの幅と高さを取得
+        const taskWindowWidth = this.taskWindow.displayWidth;
+        const taskWindowHeight = this. taskWindow.displayHeight;
+    
+        // メッセージテキストを表示
+        this.taskMessage = this.add.text(this.taskWindow.x, this.taskWindow.y - taskWindowHeight / 2 + 130, message, {
+            fontSize: '24px',
+            fill: '#000'
+        }).setOrigin(0.5, 0.5);
+    
+        // ヒントボタンを作成
+        this.hintButton = this.add.image(this.taskWindow.x, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
+            .setInteractive()
+            .setScale(0.2)
+            .on('pointerdown', () => this.showHint());
+    
+        // クローズボタンを作成
+        this.closeButton = this.add.image(
+            this.taskWindow.x + 500,
+            this.taskWindow.y - taskWindowHeight / 2 + 80, 
+            'close-button'
+        )
+            .setInteractive()
+            .setScale(0.2)
+            .on('pointerdown', () => this.closeTaskWindow());
+    }
+    
+    showHint() {
+        // ヒントの表示を行う処理
+        this.messageText.setText('');
+    }
+    
+    closeTaskWindow() {
+        // タスクウィンドウ、メッセージ、ヒントボタン、クローズボタンを消す
+        this.taskWindow.destroy();
+        this.taskMessage.destroy();
+        this.hintButton.destroy();
+        this.closeButton.destroy();
     }
 
     createReportButton() {
