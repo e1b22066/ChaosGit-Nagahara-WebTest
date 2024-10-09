@@ -7,6 +7,7 @@ export class MainGameScene extends Phaser.Scene {
     preload() {
         this.load.image('GitHub', '../../assets/images/GitHub-button.png');
         this.load.image('Task', '../../assets/images/task-button.png');
+        this.load.image('Task2', '../../assets/images/co_taskButton.png');
         this.load.image('message', '../../assets/images/message.png');
         this.load.image('player', 'https://examples.phaser.io/assets/sprites/phaser-dude.png');
         this.load.image('terminalButton', '../../assets/images/terminal-button.png');
@@ -23,6 +24,7 @@ export class MainGameScene extends Phaser.Scene {
         this.createTaskButton(this.cameras.main.centerX + 100, this.cameras.main.centerY, 0.2, 'リモートリポジトリを　クローンしてください');   // Taskボタンを作成１
         this.createTaskButton(this.cameras.main.centerX - 300, this.cameras.main.centerY - 10, 0.2, 'ブランチ名をmasterからmainに　変更してください');  // Taskボタンを作成2
         this.createTaskButton(this.cameras.main.centerX - 100, this.cameras.main.centerY - 160, 0.2, 'ターミナル上で　コミット履歴を確認してください');  // Taskボタンを作成3
+        this.createTaskButton2();
         this.createTerminalButton(); // Terminalボタンを作成
         this.createReportButton(); // Reportボタンを作成
         this.createPlayer();       // プレイヤーを作成
@@ -85,6 +87,24 @@ export class MainGameScene extends Phaser.Scene {
             .setInteractive()
             .setScale(buttonScale)
             .on('pointerdown', () => this.showTaskWindow(message));
+    }
+
+    createTaskButton2() {
+        const buttonScale = 0.2;
+        const buttonWidth = this.textures.get('Task2').getSourceImage().width * buttonScale;
+        const buttonHeight = this.textures.get('Task2').getSourceImage().height * buttonScale;
+
+        // ボタンの配置位置を設定
+        const x = this.cameras.main.width - buttonWidth / 2 - 300;
+        const y = buttonHeight / 2 + 300;
+
+        // ボタンの生成とクリックイベントの設定
+        this.add.image(x, y, 'Task2')
+            .setInteractive()
+            .setScale(buttonScale)
+            .on('pointerdown', () => {
+                this.scene.start('CooperationTaskScene'); 
+            });
     }
     
     showTaskWindow(message) {
