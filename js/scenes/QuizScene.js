@@ -5,6 +5,11 @@ export class QuizScene extends Phaser.Scene {
     }
 
     preload() {
+        this.load.image('dummy-button', '../../assets/images/dummy-button.png');
+    }
+
+    init(data) {
+        this.timerDuration = 60; // 毎回初期化
     }
 
     create() {
@@ -61,7 +66,7 @@ export class QuizScene extends Phaser.Scene {
         if (this.timerDuration <= 0) {
             // タイマーがゼロになったら次のシーンへ移動
             this.timeEvent.remove(); // タイマーイベントを停止
-            this.scene.start('MainGameScene'); // 'MainGameScene'に移動
+            this.scene.start('RepairScene'); // 'MainGameScene'に移動
         }
     }
 
