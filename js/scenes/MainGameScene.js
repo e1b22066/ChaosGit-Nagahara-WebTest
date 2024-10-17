@@ -17,6 +17,7 @@ export class MainGameScene extends Phaser.Scene {
         this.load.image('close-button', '../../assets/images/close.png');
         this.load.image('task-window', '../../assets/images/task-window.png');
         this.load.image('hint', '../../assets/images/hint.png');
+        this.load.image('check', '../../assets/images/check.png');
     }
 
     create() {
@@ -125,33 +126,57 @@ export class MainGameScene extends Phaser.Scene {
         }).setOrigin(0.5, 0.5);
     
         // ヒントボタンを作成
-        this.hintButton = this.add.image(this.taskWindow.x, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
+        this.hintButton = this.add.image(this.taskWindow.x - 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
             .setInteractive()
             .setScale(0.2)
             .on('pointerdown', () => this.showHint());
     
         // クローズボタンを作成
-        this.closeButton = this.add.image(
-            this.taskWindow.x + 500,
-            this.taskWindow.y - taskWindowHeight / 2 + 80, 
-            'close-button'
-        )
+        this.closeButton = this.add.image(this.taskWindow.x + 500, this.taskWindow.y - taskWindowHeight / 2 + 80, 'close-button')
             .setInteractive()
             .setScale(0.2)
             .on('pointerdown', () => this.closeTaskWindow());
+
+        // チェックボタンを作成
+        this.checkButton = this.add.image(this.taskWindow.x + 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'check')
+            .setInteractive()
+            .setScale(0.2)
+            .on('pointerdown', () => this.checkTask());
     }
     
     showHint() {
         // ヒントの表示を行う処理
         this.messageText.setText('');
     }
+
+    checkTask() {
+        fetch('http://localhost:3000/check-branch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.messageText.setText('タスクを完了しました: ' + data.message);
+            } else {
+                this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            this.messageText.setText('エラーが発生しました');
+        });
+    }
     
     closeTaskWindow() {
-        // タスクウィンドウ、メッセージ、ヒントボタン、クローズボタンを消す
+        // タスクウィンドウに表示されているボタンを一緒に削除
         this.taskWindow.destroy();
         this.taskMessage.destroy();
         this.hintButton.destroy();
         this.closeButton.destroy();
+        this.checkButton.destroy();
     }
 
     createReportButton() {
