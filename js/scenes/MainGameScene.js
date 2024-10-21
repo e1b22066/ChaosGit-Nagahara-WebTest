@@ -7,6 +7,7 @@ export class MainGameScene extends Phaser.Scene {
     preload() {
         this.load.image('GitHub', '../../assets/images/GitHub-button.png');
         this.load.image('Task', '../../assets/images/task-button.png');
+        this.load.image('Task2', '../../assets/images/co_taskButton.png');
         this.load.image('message', '../../assets/images/message.png');
         this.load.image('player', 'https://examples.phaser.io/assets/sprites/phaser-dude.png');
         this.load.image('terminalButton', '../../assets/images/terminal-button.png');
@@ -16,6 +17,7 @@ export class MainGameScene extends Phaser.Scene {
         this.load.image('close-button', '../../assets/images/close.png');
         this.load.image('task-window', '../../assets/images/task-window.png');
         this.load.image('hint', '../../assets/images/hint.png');
+        this.load.image('check', '../../assets/images/check.png');
     }
 
     create() {
@@ -23,6 +25,7 @@ export class MainGameScene extends Phaser.Scene {
         this.createTaskButton(this.cameras.main.centerX + 100, this.cameras.main.centerY, 0.2, 'リモートリポジトリを　クローンしてください');   // Taskボタンを作成１
         this.createTaskButton(this.cameras.main.centerX - 300, this.cameras.main.centerY - 10, 0.2, 'ブランチ名をmasterからmainに　変更してください');  // Taskボタンを作成2
         this.createTaskButton(this.cameras.main.centerX - 100, this.cameras.main.centerY - 160, 0.2, 'ターミナル上で　コミット履歴を確認してください');  // Taskボタンを作成3
+        this.createTaskButton2();
         this.createTerminalButton(); // Terminalボタンを作成
         this.createReportButton(); // Reportボタンを作成
         this.createPlayer();       // プレイヤーを作成
@@ -86,6 +89,24 @@ export class MainGameScene extends Phaser.Scene {
             .setScale(buttonScale)
             .on('pointerdown', () => this.showTaskWindow(message));
     }
+
+    createTaskButton2() {
+        const buttonScale = 0.2;
+        const buttonWidth = this.textures.get('Task2').getSourceImage().width * buttonScale;
+        const buttonHeight = this.textures.get('Task2').getSourceImage().height * buttonScale;
+
+        // ボタンの配置位置を設定
+        const x = this.cameras.main.width - buttonWidth / 2 - 300;
+        const y = buttonHeight / 2 + 300;
+
+        // ボタンの生成とクリックイベントの設定
+        this.add.image(x, y, 'Task2')
+            .setInteractive()
+            .setScale(buttonScale)
+            .on('pointerdown', () => {
+                this.scene.start('CooperationTaskScene'); 
+            });
+    }
     
     showTaskWindow(message) {
         // タスクウィンドウを表示
@@ -105,33 +126,57 @@ export class MainGameScene extends Phaser.Scene {
         }).setOrigin(0.5, 0.5);
     
         // ヒントボタンを作成
-        this.hintButton = this.add.image(this.taskWindow.x, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
+        this.hintButton = this.add.image(this.taskWindow.x - 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
             .setInteractive()
             .setScale(0.2)
             .on('pointerdown', () => this.showHint());
     
         // クローズボタンを作成
-        this.closeButton = this.add.image(
-            this.taskWindow.x + 500,
-            this.taskWindow.y - taskWindowHeight / 2 + 80, 
-            'close-button'
-        )
+        this.closeButton = this.add.image(this.taskWindow.x + 500, this.taskWindow.y - taskWindowHeight / 2 + 80, 'close-button')
             .setInteractive()
             .setScale(0.2)
             .on('pointerdown', () => this.closeTaskWindow());
+
+        // チェックボタンを作成
+        this.checkButton = this.add.image(this.taskWindow.x + 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'check')
+            .setInteractive()
+            .setScale(0.2)
+            .on('pointerdown', () => this.checkTask());
     }
     
     showHint() {
         // ヒントの表示を行う処理
         this.messageText.setText('');
     }
+
+    checkTask() {
+        fetch('http://localhost:3000/check-branch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.messageText.setText('タスクを完了しました: ' + data.message);
+            } else {
+                this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            this.messageText.setText('エラーが発生しました');
+        });
+    }
     
     closeTaskWindow() {
-        // タスクウィンドウ、メッセージ、ヒントボタン、クローズボタンを消す
+        // タスクウィンドウに表示されているボタンを一緒に削除
         this.taskWindow.destroy();
         this.taskMessage.destroy();
         this.hintButton.destroy();
         this.closeButton.destroy();
+        this.checkButton.destroy();
     }
 
     createReportButton() {

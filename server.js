@@ -43,6 +43,36 @@ app.post('/execute-script', (req, res) => {
     });
 });
 
+app.post('/check-branch', (req, res) => {
+    const scriptPath = './shell-scripts/checkScripts/checkMainBranch.sh';
+
+    exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing script: ${stderr}`);
+            return res.json({ success: false, message: stdout  || 'Error occurred' });
+        }
+        res.json({ success: true, message: stdout });
+    });
+});
+
+// app.post('/check-branch', (req, res) => {
+//     // シェルスクリプトの実行
+//     const scriptPath = './shell-scripts/checkScripts/checkMainBranch.sh';
+//     console.log('Script path:', path.resolve('./shell-scripts/checkScripts/checkMainBranch.sh'));
+//     exec('bash ./shell-scripts/checkScripts/checkMainBranch.sh', (error, stdout, stderr) => {
+//         if (error) {
+//             console.error(`exec error: ${error}`);
+//             return res.json({ success: false, message: 'シェルスクリプトの実行に失敗しました' });
+//         }
+//         // シェルスクリプトの出力を確認
+//         if (stdout.includes('Branch name successfully changed to \'main\'.')) {
+//             res.json({ success: true, message: stdout.trim() });
+//         } else {
+//             res.json({ success: false, message: stdout.trim() });
+//         }
+//     });
+// });
+
 wss.on('connection', function connection(ws) {
     // Spawn a pseudo-terminal
     const shell = pty.spawn('bash', [], {
