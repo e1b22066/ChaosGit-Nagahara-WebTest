@@ -15,33 +15,39 @@ const filesDirectory = '';
 
 const wss = new WebSocketServer({ port: 6060 });
 
-app.get('/files', (req, res) => {
-    const files = fs.readdirSync(filesDirectory);
-    res.json(files);
-});
+let playerCount = 0; // Current number of players
+const maxPlayers = 3; // Maximum number of players
 
-app.post('/rmGitdir', (req, res) => {
-    exec('sh ./shell-scripts/rmGitdir.sh', (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error executing script: ${error}`);
-            return res.status(500).send('Error destroying .git directory');
-        }
-        res.send(stdout);
-    });
-});
+const tasks = []; // List of tasks
+const connections = {}; // List of players
 
-app.post('/execute-script', (req, res) => {
-    const scriptPath = './shell-scripts/touchFile.sh';
+// app.get('/files', (req, res) => {
+//     const files = fs.readdirSync(filesDirectory);
+//     res.json(files);
+// });
 
-    exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error executing script: ${error}`);
-            return res.json({ success: false, error: stderr });
-        }
-        console.log(`Script output: ${stdout}`);
-        res.json({ success: true });
-    });
-});
+// app.post('/rmGitdir', (req, res) => {
+//     exec('sh ./shell-scripts/rmGitdir.sh', (error, stdout, stderr) => {
+//         if (error) {
+//             console.error(`Error executing script: ${error}`);
+//             return res.status(500).send('Error destroying .git directory');
+//         }
+//         res.send(stdout);
+//     });
+// });
+
+// app.post('/execute-script', (req, res) => {
+//     const scriptPath = './shell-scripts/touchFile.sh';
+
+//     exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
+//         if (error) {
+//             console.error(`Error executing script: ${error}`);
+//             return res.json({ success: false, error: stderr });
+//         }
+//         console.log(`Script output: ${stdout}`);
+//         res.json({ success: true });
+//     });
+// });
 
 app.post('/check-branch', (req, res) => {
     const scriptPath = './shell-scripts/checkScripts/checkMainBranch.sh';
@@ -55,26 +61,40 @@ app.post('/check-branch', (req, res) => {
     });
 });
 
-// app.post('/check-branch', (req, res) => {
-//     // シェルスクリプトの実行
-//     const scriptPath = './shell-scripts/checkScripts/checkMainBranch.sh';
-//     console.log('Script path:', path.resolve('./shell-scripts/checkScripts/checkMainBranch.sh'));
-//     exec('bash ./shell-scripts/checkScripts/checkMainBranch.sh', (error, stdout, stderr) => {
-//         if (error) {
-//             console.error(`exec error: ${error}`);
-//             return res.json({ success: false, message: 'シェルスクリプトの実行に失敗しました' });
-//         }
-//         // シェルスクリプトの出力を確認
-//         if (stdout.includes('Branch name successfully changed to \'main\'.')) {
-//             res.json({ success: true, message: stdout.trim() });
-//         } else {
-//             res.json({ success: false, message: stdout.trim() });
-//         }
-//     });
-// });
+app.post('/execute-script', (req, res) => {
+    const { shellScript } = req.body; 
+    exec(`sh ${shellScript}`, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing script: ${error}`);
+            return res.json({ success: false, error: stderr });
+        }
+        console.log(`Script output: ${stdout}`);
+        res.json({ success: true , output: stdout});
+    });
+})
+
+
 
 wss.on('connection', function connection(ws) {
-    // Spawn a pseudo-terminal
+    // check the number of players
+    if (playerCount >= maxPlayers) {
+        ws.close(1000, 'Maximum number of players reached');
+        return;
+    }
+
+    // Increment the player count
+    const playerId = `player_${playerCount + 1}`;
+    playerCount++;
+    connections[playerId] = ws;
+
+    // Send the player ID to the client
+    ws.send(JSON.stringify({
+        type: 'playerInfo',
+        playerId,
+        message: `Welcome, ${playerId}!`
+    }));
+
+    // terminal setup
     const shell = pty.spawn('bash', [], {
         name: 'xterm-color',
         // cols: 80,
@@ -82,6 +102,7 @@ wss.on('connection', function connection(ws) {
         cwd: process.env.HOME,
         env: process.env
     });
+
 
     shell.on('data', function (data) {
         ws.send(data);
@@ -93,8 +114,11 @@ wss.on('connection', function connection(ws) {
 
     ws.on('close', function () {
         shell.kill();
+        delete connections[playerId];
+        playerCount--;
     });
 });
+
 
 app.listen(3000, () => {
     console.log('Server is running on port 3000');

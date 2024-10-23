@@ -1,7 +1,6 @@
 export class MainGameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainGameScene' });
-        this.terminalVisible = false; // ターミナルが表示されているかどうか
     }
 
     preload() {
