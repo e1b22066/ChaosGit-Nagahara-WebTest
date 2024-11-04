@@ -5,6 +5,7 @@ import { DiscussionScene } from './scenes/DiscussionScene.js';
 import { QuizScene } from './scenes/QuizScene.js';
 import { RepairScene } from './scenes/RepairScene.js';
 import { CooperationTaskScene } from './scenes/CooperationTaskScene.js';
+import { RegisterScene } from './scenes/RegisterScene.js';
 
 // ゲームの設定
 const config = {
@@ -13,7 +14,7 @@ const config = {
     height: window.innerHeight,
     backgroundColor: '#024578',
     parent: 'game-container',
-    scene: [TitleScene, MainGameScene, DiscussionScene, QuizScene, RepairScene, CooperationTaskScene],  // インポートしたシーンを設定
+    scene: [TitleScene, RegisterScene, MainGameScene, DiscussionScene, QuizScene, RepairScene, CooperationTaskScene],  // インポートしたシーンを設定
     physics: {
         default: 'arcade',
         arcade: {

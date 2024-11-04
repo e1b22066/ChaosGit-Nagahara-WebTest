@@ -3,12 +3,16 @@ export class MainGameScene extends Phaser.Scene {
         super({ key: 'MainGameScene' });
     }
 
+    init(data) {
+        this.socket = data.socket;
+    }
+
     preload() {
         this.load.image('GitHub', '../../assets/images/GitHub-button.png');
         this.load.image('Task', '../../assets/images/task-button.png');
         this.load.image('Task2', '../../assets/images/co_taskButton.png');
         this.load.image('message', '../../assets/images/message.png');
-        this.load.image('player', 'https://examples.phaser.io/assets/sprites/phaser-dude.png');
+        this.load.image('player', 'https://labs.phaser.io/assets/sprites/phaser-dude.png');
         this.load.image('terminalButton', '../../assets/images/terminal-button.png');
         this.load.image('closeButton', '../../assets/images/terminal-button.png');
         this.load.image('reportButton', '../../assets/images/report-button.png');
@@ -30,12 +34,24 @@ export class MainGameScene extends Phaser.Scene {
         this.createPlayer();       // プレイヤーを作成
         this.createMessageWindow(); // メッセージウィンドウを作成
         this.setupInput();         // 入力設定
+        this.setupSocketListeners(); // ソケットリスナの設定
+        
 
         // メッセージを表示するテキスト（初期は空の文字列）
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, '', {
             fontSize: '24px',
             fill: '#000'
         }).setOrigin(0.5, 0.5);
+    }
+
+    setupSocketListeners() {
+        // サーバからのメッセージを受信するためのリスナ
+        this.socket.onmessage = (message) => {
+            const data = JSON.parse(message.data);
+            if (data.type === 'playerInfo') {
+                this.showMessage(data.message);
+            }
+        };
     }
 
     createTerminalButton() {

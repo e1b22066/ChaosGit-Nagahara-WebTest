@@ -1,35 +1,30 @@
 export class RegisterScene extends Phaser.Scene {
     constructor() {
         super({ key: 'RegisterScene' });
-    }
-
-    preload() {
+        this.maxPlayers = 3;
     }
 
     create() {
-        // フォームの表示
-        this.formContainer = document.getElementById('form-container');
-        this.formContainer.style.display = 'block'; // フォームを表示
+        this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 100, 'Waiting for players...', { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
+        // this.playerCountText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, `Players: ${data.count} / ${this.maxPlayers}`, { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
+        this.playerCountText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Players connected: 0', { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5);
 
-        // フォームのボタンにクリックイベントを追加
-        const submitButton = document.getElementById('submit-button');
-        submitButton.addEventListener('click', () => this.handleSubmit());
+        this.socket = new WebSocket('ws://localhost:8080');
 
-        // ゲームのタイトルや説明文などを追加する場合はここで行います
-        this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 150, 'Welcome to Chaos Crewmate', { fontSize: '32px', fill: '#fff' })
-            .setOrigin(0.5);
-    }
+        this.socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
 
-    handleSubmit() {
-        const username = document.getElementById('username').value;
-        const email = document.getElementById('email').value;
+            if (data.type === 'playerCount') {
+                console.log("hi man!");
+                this.playerCountText.setText(`Players connected: ${data.count}`);
+                if (data.count >= this.maxPlayers) {
+                    this.socket.send(JSON.stringify({ type: 'startGame' }));    
+                }
+            }
 
-        if (username && email) {
-            console.log(`Username: ${username}, Email: ${email}`);
-            this.formContainer.style.display = 'none'; // フォームを非表示にする
-            this.scene.start('MainGameScene'); // メインゲームシーンを開始
-        } else {
-            alert('Please fill out both fields.');
-        }
+            if (data.type === 'startGame') {
+                this.scene.start('MainGameScene', { socket: this.socket });
+            }
+        };
     }
 }

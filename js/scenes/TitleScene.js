@@ -11,7 +11,7 @@ export class TitleScene extends Phaser.Scene {
         const startButton = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'startButton')
             .setInteractive()
             .setScale(0.3)
-            .on('pointerdown', () => this.scene.start('MainGameScene'));
+            .on('pointerdown', () => this.scene.start('RegisterScene'));
 
         this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 100, 'Chaos Crewmate', { fontSize: '32px', fill: '#fff' })
             .setOrigin(0.5);

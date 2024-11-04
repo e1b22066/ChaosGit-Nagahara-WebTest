@@ -15,47 +15,38 @@ const filesDirectory = '';
 
 const wss = new WebSocketServer({ port: 6060 });
 
-let playerCount = 0; // Current number of players
-const maxPlayers = 3; // Maximum number of players
+wss.on('connection', function connection(ws) {
+    // ターミナルを起動
+    const shell = pty.spawn('bash', [], {
+        name: 'xterm-color',
+        cwd: process.env.HOME,
+        env: process.env
+    });
 
-const tasks = []; // List of tasks
-const connections = {}; // List of players
+    // ターミナルのデータをクライアントに送信
+    shell.on('data', function (data) {
+        ws.send(data);
+    });
 
-// app.get('/files', (req, res) => {
-//     const files = fs.readdirSync(filesDirectory);
-//     res.json(files);
-// });
+    // クライアントからのメッセージをターミナルに送信
+    ws.on('message', function incoming(message) {
+        shell.write(message);
+    });
 
-// app.post('/rmGitdir', (req, res) => {
-//     exec('sh ./shell-scripts/rmGitdir.sh', (error, stdout, stderr) => {
-//         if (error) {
-//             console.error(`Error executing script: ${error}`);
-//             return res.status(500).send('Error destroying .git directory');
-//         }
-//         res.send(stdout);
-//     });
-// });
+    // クライアントが切断された際にターミナルを終了
+    ws.on('close', function () {
+        shell.kill();
+    });
+});
 
-// app.post('/execute-script', (req, res) => {
-//     const scriptPath = './shell-scripts/touchFile.sh';
-
-//     exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
-//         if (error) {
-//             console.error(`Error executing script: ${error}`);
-//             return res.json({ success: false, error: stderr });
-//         }
-//         console.log(`Script output: ${stdout}`);
-//         res.json({ success: true });
-//     });
-// });
-
+// シェルスクリプト実行用エンドポイント
 app.post('/check-branch', (req, res) => {
     const scriptPath = './shell-scripts/checkScripts/checkMainBranch.sh';
 
     exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
         if (error) {
             console.error(`Error executing script: ${stderr}`);
-            return res.json({ success: false, message: stdout  || 'Error occurred' });
+            return res.json({ success: false, message: stdout || 'Error occurred' });
         }
         res.json({ success: true, message: stdout });
     });
@@ -69,56 +60,9 @@ app.post('/execute-script', (req, res) => {
             return res.json({ success: false, error: stderr });
         }
         console.log(`Script output: ${stdout}`);
-        res.json({ success: true , output: stdout});
-    });
-})
-
-
-
-wss.on('connection', function connection(ws) {
-    // check the number of players
-    if (playerCount >= maxPlayers) {
-        ws.close(1000, 'Maximum number of players reached');
-        return;
-    }
-
-    // Increment the player count
-    const playerId = `player_${playerCount + 1}`;
-    playerCount++;
-    connections[playerId] = ws;
-
-    // Send the player ID to the client
-    ws.send(JSON.stringify({
-        type: 'playerInfo',
-        playerId,
-        message: `Welcome, ${playerId}!`
-    }));
-
-    // terminal setup
-    const shell = pty.spawn('bash', [], {
-        name: 'xterm-color',
-        // cols: 80,
-        // rows: 30,
-        cwd: process.env.HOME,
-        env: process.env
-    });
-
-
-    shell.on('data', function (data) {
-        ws.send(data);
-    });
-
-    ws.on('message', function incoming(message) {
-        shell.write(message);
-    });
-
-    ws.on('close', function () {
-        shell.kill();
-        delete connections[playerId];
-        playerCount--;
+        res.json({ success: true, output: stdout });
     });
 });
-
 
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
