@@ -42,16 +42,24 @@ export class MainGameScene extends Phaser.Scene {
             fontSize: '24px',
             fill: '#000'
         }).setOrigin(0.5, 0.5);
+
+        this.socket.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type == 'enterDiscussion') {
+                this.scene.start('DiscussionScene', { socket: this.socket });
+            }
+        });
+
     }
 
     setupSocketListeners() {
-        // サーバからのメッセージを受信するためのリスナ
-        this.socket.onmessage = (message) => {
-            const data = JSON.parse(message.data);
+        // Receive messages from the server
+        this.socket.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
             if (data.type === 'playerInfo') {
                 this.showMessage(data.message);
             }
-        };
+        });
     }
 
     createTerminalButton() {
@@ -208,8 +216,18 @@ export class MainGameScene extends Phaser.Scene {
             .setInteractive()
             .setScale(buttonScale)
             .on('pointerdown', () => {
-                this.scene.start('DiscussionScene'); // クリック時にDiscussionSceneへ移動
+                // this.scene.start('DiscussionScene'); // クリック時にDiscussionSceneへ移動
+                this.reportIssue();
             });
+    }
+
+    reportIssue() {
+        const message = JSON.stringify({ type: 'reportIssue' });
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(message);
+        } else {
+            console.warn('Socket is not open. Cannot send message.');
+        }
     }
 
     createPlayer() {

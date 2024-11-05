@@ -30,9 +30,17 @@ wss.on('connection', (ws) => {
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
+
+      // Start game
       if (data.type === 'startGame' && players.length >= 2) {
         broadcast({ type: 'startGame' });
       }
+
+      // Trigger discussion phase
+      if (data.type === 'reportIssue') {
+        broadcast({ type: 'enterDiscussion' });
+      }
+
     } catch (error) {
       console.error('Error parsing message:', error);
     }
