@@ -104,10 +104,16 @@ app.post('/check-task', (req, res) => {
   }
 
   const scriptMap = {
-    'check-init': './shell-scripts/checkScripts/checkGitInit.sh',
-    'check-branch': './shell-scripts/checkScripts/checkMainBranch.sh',
-    'check-usr': './shell-scripts/checkScripts/checkUsrRegister.sh',
-    'check-url': './shell-scripts/checkScripts/checkURL.sh'
+    'check-init': './shell-scripts/checkScripts/checkGitInit.sh', // task1
+    'check-branch': './shell-scripts/checkScripts/checkMainBranch.sh', // task2
+    'check-usr': './shell-scripts/checkScripts/checkUsrRegister.sh', // task3
+    'check-url': './shell-scripts/checkScripts/checkURL.sh', // task4
+    'check-push': './shell-scripts/checkScripts/checkPush.sh', // task5
+    'check-ignore': './shell-scripts/checkScripts/checkIgnore.sh', // task6
+    'check-jcommit':'./shell-scripts/checkScripts/checkCommitJava.sh', // task7
+    'check-back':'./shell-scripts/checkScripts/checkBack.sh', // task8
+    'check-newbranch':'./shell-scripts/checkScripts/checkNewBranch.sh', // task9
+    'check-merge':'./shell-scripts/checkScripts/checkMerge.sh' // task10
     // Add more task types and their corresponding script paths as needed
   };
 

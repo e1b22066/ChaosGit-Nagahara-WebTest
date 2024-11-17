@@ -161,15 +161,15 @@ export class MainGameScene extends Phaser.Scene {
             { description: 'あなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
             { description: 'Gitで作業を記録するために，名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．', type: 'check-usr'},
             { description: 'Gitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.', type: 'check-branch'},
-            { description: 'リモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'}
+            { description: 'リモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'},
+            { description: '作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．', type: 'check-push'},
+            { description: 'プロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
+            { description: '"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
+            { description: '過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
+            { description: '新しい機能を開発するために，feature-xyzという名前のブランチを作成してください．\nそのブランチで作業を進め，変更をリモートにpushしてください．', type: 'check-newbranch'},
+            { description: 'feature-xyzブランチの作業をmainブランチに反映させるためにPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'}
 
-            // 'リモートリポジトリを操作できるように，リモートのURLを設定してください．',
-            // '作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．',
-            // 'プロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．',
-            // '"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．',
-            // '過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\n最新のコミットを取り消して，リポジトリを正しい状態に戻してください．',
-            // '新しい機能を開発するために，feature-xyzという名前のブランチを作成してください．\nそのブランチで作業を進め，変更をリモートにpushしてください．',
-            // 'feature-xyzブランチの作業をmainブランチに反映させるためにPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．',
+
             // 'リモートリポジトリに新しい変更を加えてください．その後，変更をリモートにpushしてください．',
             // 'リモートリポジトリとローカルリポジトリの間でコンフリクトが発生しました．\nこれを解消してリポジトリを正しい状態に戻してください．',
             // 'プロジェクトのリリースに向けて，v1.0タグを作成し，リリース用ブランチを作成してください．\nその後リモートにpushしてください．',
@@ -385,6 +385,6 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     handleButtonClick() {
-        window.open('https://github.com/Dagechan/chaos-repo');
+        window.open('https://github.com/Dagechan/WorkSpace');
     }
 }
