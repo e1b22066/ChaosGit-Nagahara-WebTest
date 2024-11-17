@@ -1,18 +1,19 @@
 #!/bin/bash
 
 # specify the directory to check
-# REPO_PATH="../workspace/"
-REPO_PATH="workspace/"
+REPO_PATH="../workspace/"
 
+expected_url="https://github.com/Dagechan/WorkSpace.git"
+actual_url=$(git -C "$REPO_PATH" remote get-url origin)
 
 # check if the directory exists
 if [ -d "$REPO_PATH" ]; then
   # execute git command in the specified directory
-  if git -C "$REPO_PATH" branch | grep -q '\bmain\b'; then
-    echo "Branch name successfully changed to 'main'."
+  if [ "$actual_url" = "$expected_url" ]; then
+    echo "Task 4 Completed"
     exit 0
   else
-    echo "Branch name change to 'main' not found."
+    echo "Task 4 Incomplete"
     exit 1
   fi
 else

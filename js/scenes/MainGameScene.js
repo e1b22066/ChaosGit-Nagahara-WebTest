@@ -1,3 +1,5 @@
+import TaskValidator from '../TaskValidator.js';
+
 export class MainGameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainGameScene' });
@@ -26,6 +28,7 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     create() {
+        this.taskValidator = new TaskValidator();
         this.createMessageWindow(); // メッセージウィンドウを作成
 
         // メッセージを表示するテキスト（初期は空の文字列）
@@ -147,45 +150,43 @@ export class MainGameScene extends Phaser.Scene {
         this.add.image(x - 35, y, 'check')
             .setInteractive()
             .setScale(buttonScale)
-            .on('pointerdown', () => this.finishTask());
+            .on('pointerdown', () => this.checkTask('check-init'));
 
-        // const taskWindowWidth = this.taskWindow.displayWidth;
-        // const taskWindowHeight = this.taskWindow.displayHeight;
-
-        // this.checkButton = this.add.image(this.messageWindow.x + 100, this.messageWindow.y + taskWindowHeight / 2 - 50, 'check')
-        //     .setInteractive()
-        //     .setScale(0.2)
-        //     .on('pointerdown', () => this.checkTask());
     }
+
 
 
     scenario() {
         this.tasks = [
-            'あなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．',
-            'Gitで作業を記録するために，あなたの名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．',
-            'Gitのデフォルトブランチ名はmasterになっています．\nこのブランチをmainに変更してください．',
-            'リモートリポジトリを操作できるように，リモートのURLを設定してください．',
-            '作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．',
-            'プロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．',
-            '"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．',
-            '過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\n最新のコミットを取り消して，リポジトリを正しい状態に戻してください．',
-            '新しい機能を開発するために，feature-xyzという名前のブランチを作成してください．\nそのブランチで作業を進め，変更をリモートにpushしてください．',
-            'feature-xyzブランチの作業をmainブランチに反映させるためにPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．',
-            'リモートリポジトリに新しい変更を加えてください．その後，変更をリモートにpushしてください．',
-            'リモートリポジトリとローカルリポジトリの間でコンフリクトが発生しました．\nこれを解消してリポジトリを正しい状態に戻してください．',
-            'プロジェクトのリリースに向けて，v1.0タグを作成し，リリース用ブランチを作成してください．\nその後リモートにpushしてください．',
-            'プロジェクト内に不要なファイルが見つかりました．\nこのファイルを削除し，リモートに反映してください．',
+            { description: 'あなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
+            { description: 'Gitで作業を記録するために，名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．', type: 'check-usr'},
+            { description: 'Gitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.', type: 'check-branch'},
+            { description: 'リモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'}
+
+            // 'リモートリポジトリを操作できるように，リモートのURLを設定してください．',
+            // '作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．',
+            // 'プロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．',
+            // '"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．',
+            // '過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\n最新のコミットを取り消して，リポジトリを正しい状態に戻してください．',
+            // '新しい機能を開発するために，feature-xyzという名前のブランチを作成してください．\nそのブランチで作業を進め，変更をリモートにpushしてください．',
+            // 'feature-xyzブランチの作業をmainブランチに反映させるためにPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．',
+            // 'リモートリポジトリに新しい変更を加えてください．その後，変更をリモートにpushしてください．',
+            // 'リモートリポジトリとローカルリポジトリの間でコンフリクトが発生しました．\nこれを解消してリポジトリを正しい状態に戻してください．',
+            // 'プロジェクトのリリースに向けて，v1.0タグを作成し，リリース用ブランチを作成してください．\nその後リモートにpushしてください．',
+            // 'プロジェクト内に不要なファイルが見つかりました．\nこのファイルを削除し，リモートに反映してください．',
         ];
+        this.currentTaskIndex = 0;
         this.showCurrentTask();
     }
 
     showCurrentTask() {
         const currentTask = this.tasks[this.currentTaskIndex];
-        if (currentTask) {
-            this.showMessage(currentTask);
-        } else {
-            this.messageText.setText('すべてのタスクが完了しました．');
-        }
+        this.messageText.setText(currentTask.description);
+        // if (currentTask) {
+        //     this.showMessage(currentTask.description);
+        // } else {
+        //     this.messageText.setText('すべてのタスクが完了しました．');
+        // }
     }
 
     showMessage(message) {
@@ -239,19 +240,65 @@ export class MainGameScene extends Phaser.Scene {
         this.messageText.setText('');
     }
 
+    // async checkTask() {
+    //     const task = {
+    //         type: 'gitInit',
+    //         params: { directory: process.cwd() } // or provide the absolute path if needed
+    //     };
     
+    //     try {
+    //         const result = await this.taskValidator.validate(task.type, task.params);
+    //         if (result.success) {
+    //             this.showMessage('Task completed successfully: ' + result.message);
+    //         } else {
+    //             this.showMessage('Task failed: ' + result.message);
+    //         }
+    //     } catch (error) {
+    //         console.error('Error validating task:', error);
+    //         this.showMessage('Error occurred while validating task.');
+    //     }
+    // }
 
+    // checkTask() {
+    //     fetch('http://localhost:8080/check-task', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //     })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         if (data.success) {
+    //             this.messageText.setText('タスクを完了しました: ' + data.message);
+    //         } else {
+    //             this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
+    //         }
+    //     })
+    //     .catch(error => {
+    //         console.error('Error:', error);
+    //         this.messageText.setText('エラーが発生しました');
+    //     });
+    // }
     checkTask() {
-        fetch('http://localhost:3000/check-branch', {
+        const currentTask = this.tasks[this.currentTaskIndex];
+        
+        if (!currentTask) {
+            this.messageText.setText('No task available to check.');
+            return;
+        }
+    
+        fetch('http://localhost:8080/check-task', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            body: JSON.stringify({ type: currentTask.type }) // Use the type from the current task
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 this.messageText.setText('タスクを完了しました: ' + data.message);
+                this.moveToNextTask();
             } else {
                 this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
             }
@@ -261,6 +308,18 @@ export class MainGameScene extends Phaser.Scene {
             this.messageText.setText('エラーが発生しました');
         });
     }
+    
+
+    moveToNextTask() {
+        this.currentTaskIndex++;
+
+        if (this.currentTaskIndex < this.tasks.length) {
+            this.showCurrentTask();
+        } else {
+            this.messageText.setText('すべてのタスクを完了しました！');
+        }
+    }
+    
     
     
     closeTaskWindow() {
