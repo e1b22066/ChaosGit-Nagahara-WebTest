@@ -39,10 +39,10 @@ export class MainGameScene extends Phaser.Scene {
 
         this.createGitHubButton(); // GitHubボタンを作成
         this.createCheckButton(); // Checkボタンを作成
-        this.createTaskButton(this.cameras.main.centerX + 100, this.cameras.main.centerY, 0.2, 'リモートリポジトリを　クローンしてください');   // Taskボタンを作成１
-        this.createTaskButton(this.cameras.main.centerX - 300, this.cameras.main.centerY - 10, 0.2, 'ブランチ名をmasterからmainに　変更してください');  // Taskボタンを作成2
-        this.createTaskButton(this.cameras.main.centerX - 100, this.cameras.main.centerY - 160, 0.2, 'ターミナル上で　コミット履歴を確認してください');  // Taskボタンを作成3
-        this.createTaskButton2();
+        // this.createTaskButton(this.cameras.main.centerX + 100, this.cameras.main.centerY, 0.2, 'リモートリポジトリを　クローンしてください');   // Taskボタンを作成１
+        // this.createTaskButton(this.cameras.main.centerX - 300, this.cameras.main.centerY - 10, 0.2, 'ブランチ名をmasterからmainに　変更してください');  // Taskボタンを作成2
+        // this.createTaskButton(this.cameras.main.centerX - 100, this.cameras.main.centerY - 160, 0.2, 'ターミナル上で　コミット履歴を確認してください');  // Taskボタンを作成3
+        // this.createTaskButton2();
         this.createTerminalButton(); // Terminalボタンを作成
         this.createReportButton(); // Reportボタンを作成
         this.createPlayer();       // プレイヤーを作成
@@ -160,20 +160,16 @@ export class MainGameScene extends Phaser.Scene {
         this.tasks = [
             { description: 'あなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
             { description: 'Gitで作業を記録するために，名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．', type: 'check-usr'},
-            { description: 'Gitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.', type: 'check-branch'},
+            { description: 'Main.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．', type: 'check-initcommit'},
+            { description: 'Gitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n', type: 'check-branch'},
             { description: 'リモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'},
             { description: '作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．', type: 'check-push'},
             { description: 'プロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
             { description: '"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
             { description: '過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
-            { description: '新しい機能を開発するために，feature-xyzという名前のブランチを作成してください．\nそのブランチで作業を進め，変更をリモートにpushしてください．', type: 'check-newbranch'},
-            { description: 'feature-xyzブランチの作業をmainブランチに反映させるためにPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'}
-
-
-            // 'リモートリポジトリに新しい変更を加えてください．その後，変更をリモートにpushしてください．',
-            // 'リモートリポジトリとローカルリポジトリの間でコンフリクトが発生しました．\nこれを解消してリポジトリを正しい状態に戻してください．',
-            // 'プロジェクトのリリースに向けて，v1.0タグを作成し，リリース用ブランチを作成してください．\nその後リモートにpushしてください．',
-            // 'プロジェクト内に不要なファイルが見つかりました．\nこのファイルを削除し，リモートに反映してください．',
+            { description: '新しい機能を開発するために，"feature-xyz"という名前のブランチを作成してください．\nそのブランチでMonster.javaを作成し\nリモートにpushしてください．', type: 'check-newbranch'},
+            { description: 'feature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
+            { description: 'プロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
         ];
         this.currentTaskIndex = 0;
         this.showCurrentTask();
@@ -216,23 +212,22 @@ export class MainGameScene extends Phaser.Scene {
         }).setOrigin(0.5, 0.5);
     
         // ヒントボタンを作成
-        this.hintButton = this.add.image(this.taskWindow.x - 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
-            .setInteractive()
-            .setScale(0.2)
-            .on('pointerdown', () => this.showHint());
+        // this.hintButton = this.add.image(this.taskWindow.x - 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
+        //     .setInteractive()
+        //     .setScale(0.2)
+        //     .on('pointerdown', () => this.showHint());
     
         // クローズボタンを作成
         this.closeButton = this.add.image(this.taskWindow.x + 500, this.taskWindow.y - taskWindowHeight / 2 + 80, 'close-button')
             .setInteractive()
             .setScale(0.2)
-            // .on('pointerdown', () => this.closeTaskWindow());
-            .on('pointerdown', () => this.finishTask());
+            .on('pointerdown', () => this.closeTaskWindow());
 
         // チェックボタンを作成
-        this.checkButton = this.add.image(this.taskWindow.x + 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'check')
-            .setInteractive()
-            .setScale(0.2)
-            .on('pointerdown', () => this.checkTask());
+        // this.checkButton = this.add.image(this.taskWindow.x + 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'check')
+        //     .setInteractive()
+        //     .setScale(0.2)
+        //     .on('pointerdown', () => this.checkTask());
     }
     
     showHint() {
@@ -240,45 +235,6 @@ export class MainGameScene extends Phaser.Scene {
         this.messageText.setText('');
     }
 
-    // async checkTask() {
-    //     const task = {
-    //         type: 'gitInit',
-    //         params: { directory: process.cwd() } // or provide the absolute path if needed
-    //     };
-    
-    //     try {
-    //         const result = await this.taskValidator.validate(task.type, task.params);
-    //         if (result.success) {
-    //             this.showMessage('Task completed successfully: ' + result.message);
-    //         } else {
-    //             this.showMessage('Task failed: ' + result.message);
-    //         }
-    //     } catch (error) {
-    //         console.error('Error validating task:', error);
-    //         this.showMessage('Error occurred while validating task.');
-    //     }
-    // }
-
-    // checkTask() {
-    //     fetch('http://localhost:8080/check-task', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json'
-    //         },
-    //     })
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         if (data.success) {
-    //             this.messageText.setText('タスクを完了しました: ' + data.message);
-    //         } else {
-    //             this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
-    //         }
-    //     })
-    //     .catch(error => {
-    //         console.error('Error:', error);
-    //         this.messageText.setText('エラーが発生しました');
-    //     });
-    // }
     checkTask() {
         const currentTask = this.tasks[this.currentTaskIndex];
         
@@ -297,15 +253,18 @@ export class MainGameScene extends Phaser.Scene {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                this.messageText.setText('タスクを完了しました: ' + data.message);
+                // this.messageText.setText('タスクを完了しました: ' + data.message);
+                this.showPopUpWindow('タスクを完了しました: ' + data.message);
                 this.moveToNextTask();
             } else {
-                this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
+                // this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
+                this.showPopUpWindow('タスクの実行に失敗しました: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            this.messageText.setText('エラーが発生しました');
+            // this.messageText.setText('エラーが発生しました');
+            this.showPopUpWindow('エラーが発生しました');
         });
     }
     
@@ -326,9 +285,9 @@ export class MainGameScene extends Phaser.Scene {
         // タスクウィンドウに表示されているボタンを一緒に削除
         this.taskWindow.destroy();
         this.taskMessage.destroy();
-        this.hintButton.destroy();
         this.closeButton.destroy();
-        this.checkButton.destroy();
+        // this.hintButton.destroy();
+        // this.checkButton.destroy();
     }
 
     createReportButton() {

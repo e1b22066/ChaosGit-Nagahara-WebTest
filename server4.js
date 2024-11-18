@@ -13,45 +13,6 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: 'http://127.0.0.1:5501' }));
 
-// Define validation endpoints
-// app.post('/validate-git-init', (req, res) => {
-//   const { directory } = req.body;
-
-//   if (!directory) {
-//     return res.status(400).json({ success: false, message: 'Directory path is required.' });
-//   }
-
-//   const gitFolder = path.resolve(directory, '.git'); // Ensure path is resolved correctly
-
-//   if (fs.existsSync(gitFolder)) {
-//     res.json({ success: true, message: '.git folder found, Git initialized correctly.' });
-//   } else {
-//     res.json({ success: false, message: 'Git not initialized in the specified directory.' });
-//   }
-// });
-
-// app.post('/execute-command', (req, res) => {
-//   const { command } = req.body;
-  
-//   if (!command) {
-//       return res.status(400).json({ error: 'Command not provided.' });
-//   }
-
-//   exec(command, (error, stdout, stderr) => {
-//       if (error) {
-//           return res.status(500).json({ error: stderr.trim() });
-//       }
-//       res.send(stdout.trim());
-//   });
-// });
-
-// // You can add more validation endpoints as needed
-// app.post('/validate-branch', (req, res) => {
-//   const { branchName } = req.body;
-//   // Example logic to validate branch creation
-//   // Implement actual Git repository validation here
-//   res.json({ success: true, message: `Branch ${branchName} validation not yet implemented.` });
-// });
 
 // Create an HTTP server using the Express app
 const server = http.createServer(app);
@@ -59,42 +20,6 @@ const server = http.createServer(app);
 // Create a WebSocket server using the HTTP server
 const wss = new WebSocketServer({ server });
 let players = [];
-
-// app.post('/check-branch', (req, res) => {
-//   const scriptPath = './shell-scripts/checkScripts/checkMainBranch.sh';
-
-//   exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
-//     if (error) {
-//         console.error(`Error executing script: ${stderr}`);
-//         return res.json({ success: false, message: stdout || 'Error occurred' });
-//     }
-//     res.json({ success: true, message: stdout });
-//   });
-// });
-
-// app.post('/check-init', (req, res) => {
-//   const scriptPath = './shell-scripts/checkScripts/checkGitInit.sh';
-
-//   exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
-//     if (error) {
-//       console.error(`Error executing script: ${stderr}`);
-//       return res.json({ success: false, message: stdout || 'Error occurred' });
-//     }
-//     res.json({ success: true, message: stdout });
-//   });
-// });
-
-// app.post('/check-usr', (req, res) => {
-//   const scriptPath = './shell-scripts/checkScripts/checkUsrRegister.sh';
-
-//   exec(`sh ${scriptPath}`, (error, stdout, stderr) => {
-//     if (error) {
-//       console.error(`Error executing script: ${stderr}`);
-//       return res.json({ success: false, message: stdout || 'Error occurred' });
-//     }
-//     res.json({ success: true, message: stdout });
-//   });
-// });
 
 app.post('/check-task', (req, res) => {
   const { type } = req.body;
@@ -105,16 +30,17 @@ app.post('/check-task', (req, res) => {
 
   const scriptMap = {
     'check-init': './shell-scripts/checkScripts/checkGitInit.sh', // task1
-    'check-branch': './shell-scripts/checkScripts/checkMainBranch.sh', // task2
-    'check-usr': './shell-scripts/checkScripts/checkUsrRegister.sh', // task3
-    'check-url': './shell-scripts/checkScripts/checkURL.sh', // task4
-    'check-push': './shell-scripts/checkScripts/checkPush.sh', // task5
-    'check-ignore': './shell-scripts/checkScripts/checkIgnore.sh', // task6
-    'check-jcommit':'./shell-scripts/checkScripts/checkCommitJava.sh', // task7
-    'check-back':'./shell-scripts/checkScripts/checkBack.sh', // task8
-    'check-newbranch':'./shell-scripts/checkScripts/checkNewBranch.sh', // task9
-    'check-merge':'./shell-scripts/checkScripts/checkMerge.sh' // task10
-    // Add more task types and their corresponding script paths as needed
+    'check-usr': './shell-scripts/checkScripts/checkUsrRegister.sh', // task2
+    'check-initcommit': './shell-scripts/checkScripts/checkInitCommit.sh', // task3
+    'check-branch': './shell-scripts/checkScripts/checkMainBranch.sh', // task4
+    'check-url': './shell-scripts/checkScripts/checkURL.sh', // task5
+    'check-push': './shell-scripts/checkScripts/checkPush.sh', // task6
+    'check-ignore': './shell-scripts/checkScripts/checkIgnore.sh', // task7
+    'check-jcommit':'./shell-scripts/checkScripts/checkCommitJava.sh', // task8
+    'check-back':'./shell-scripts/checkScripts/checkBack.sh', // task9
+    'check-newbranch':'./shell-scripts/checkScripts/checkNewBranch.sh', // task10
+    'check-merge':'./shell-scripts/checkScripts/checkMerge.sh', // task11
+    'check-release':'./shell-scripts/checkScripts/checkRelease.sh' // task12
   };
 
   const scriptPath = scriptMap[type];
