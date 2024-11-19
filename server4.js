@@ -107,6 +107,11 @@ wss.on('connection', (ws) => {
         broadcast({ type: 'startGame' });
       }
 
+      // Synchronize task progress
+      if (data.type === 'clearTask') {
+        broadcast({ type: 'moveToNextTask'});
+      }
+
       // Trigger discussion phase
       if (data.type === 'reportIssue') {
         broadcast({ type: 'enterDiscussion' });

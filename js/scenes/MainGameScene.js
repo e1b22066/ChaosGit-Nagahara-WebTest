@@ -52,9 +52,15 @@ export class MainGameScene extends Phaser.Scene {
             if (data.type === 'currenTask') {
                 this.updateTask(data.currentTask);
             }
+
             if (data.type == 'enterDiscussion') {
                 this.scene.start('DiscussionScene', { socket: this.socket });
             }
+            
+            if (data.type == 'moveToNextTask') {
+                this.moveToNextTask();
+            }
+
         });
 
     }
@@ -150,7 +156,7 @@ export class MainGameScene extends Phaser.Scene {
         this.add.image(x - 35, y, 'check')
             .setInteractive()
             .setScale(buttonScale)
-            .on('pointerdown', () => this.checkTask('check-init'));
+            .on('pointerdown', () => this.checkTask());
 
     }
 
@@ -260,7 +266,7 @@ export class MainGameScene extends Phaser.Scene {
             if (data.success) {
                 // this.messageText.setText('タスクを完了しました: ' + data.message);
                 this.showPopUpWindow('タスクを完了しました: ' + data.message);
-                this.moveToNextTask();
+                this.clearTask();
             } else {
                 // this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
                 this.showPopUpWindow('タスクの実行に失敗しました: ' + data.message);
@@ -283,6 +289,24 @@ export class MainGameScene extends Phaser.Scene {
             this.messageText.setText('すべてのタスクを完了しました！');
         }
     }
+
+    clearTask() {
+        const message = JSON.stringify({ type: 'clearTask' });
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(message);
+        } else {
+            console.warn('Socket is not open. Cannot send message.');
+        }
+    }
+
+    // moveToNextTask() {
+    //     const message = JSON.stringify({ type: 'moveToNextTask' });
+    //     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+    //         this.socket.send(message);
+    //     } else {
+    //         console.warn('Socket is not open. Cannot send message.');
+    //     }
+    // }
     
     
     
