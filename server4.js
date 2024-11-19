@@ -21,6 +21,26 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 let players = [];
 
+const sabotageMap = {
+  'sabo-pushRemote':'./shell-scripts/sabotages/pushRemote.sh',
+  'sabo-addGabageFile':'./shell-scripts/sabotages/addGabageFile.sh',
+  'sabo-conflict':'./shell-scripts/sabotages/conflict.sh'
+};
+
+function triggerSabotage(taskType) {
+  const sabotageScript = sabotageMap[taskType];
+  if (sabotageScript) {
+    exec(`sh ${sabotageScript}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error executing sabotage script (${taskType}):`, stderr);
+      } else {
+        console.log(`Sabotage executed for task ${taskType}:`, stdout);
+        broadcast({ type: 'sabotage', taskType });
+      }
+    });
+  }
+}
+
 app.post('/check-task', (req, res) => {
   const { type } = req.body;
 
@@ -54,7 +74,20 @@ app.post('/check-task', (req, res) => {
       console.error(`Error executing script (${type}):`, stderr);
       return res.json({ success: false, message: stderr || 'Error occurred' });
     }
+
     res.json({ success: true, message: stdout });
+
+    // Sabotage trigger
+    if (type === 'check-push') { // Task6
+      triggerSabotage('sabo-pushRemote');
+      console.log('sabotage1 executed');
+    } else if (type === 'check-back') {  // Task9
+      triggerSabotage('sabo-addGabageFile');
+      console.log('sabotage2 executed');
+    } else if (type === 'check-newbranch') { // Task10
+      triggerSabotage('sabo-conflict');
+      console.log('sabotage3 executed');
+    }
   });
 });
 

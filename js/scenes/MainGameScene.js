@@ -22,9 +22,10 @@ export class MainGameScene extends Phaser.Scene {
         this.load.image('reportButton', '../../assets/images/report-button.png');
         this.load.image('close-term-button', '../../assets/images/close-term-button.png');
         this.load.image('close-button', '../../assets/images/close.png');
-        this.load.image('task-window', '../../assets/images/task-window.png');
+        this.load.image('task-window', '../../assets/images/alert.png');
         this.load.image('hint', '../../assets/images/hint.png');
         this.load.image('check', '../../assets/images/check.png');
+        this.load.image('task-clear', '../../assets/images/clear.png');
     }
 
     create() {
@@ -39,10 +40,6 @@ export class MainGameScene extends Phaser.Scene {
 
         this.createGitHubButton(); // GitHubボタンを作成
         this.createCheckButton(); // Checkボタンを作成
-        // this.createTaskButton(this.cameras.main.centerX + 100, this.cameras.main.centerY, 0.2, 'リモートリポジトリを　クローンしてください');   // Taskボタンを作成１
-        // this.createTaskButton(this.cameras.main.centerX - 300, this.cameras.main.centerY - 10, 0.2, 'ブランチ名をmasterからmainに　変更してください');  // Taskボタンを作成2
-        // this.createTaskButton(this.cameras.main.centerX - 100, this.cameras.main.centerY - 160, 0.2, 'ターミナル上で　コミット履歴を確認してください');  // Taskボタンを作成3
-        // this.createTaskButton2();
         this.createTerminalButton(); // Terminalボタンを作成
         this.createReportButton(); // Reportボタンを作成
         this.createPlayer();       // プレイヤーを作成
@@ -52,6 +49,9 @@ export class MainGameScene extends Phaser.Scene {
         
         this.socket.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
+            if (data.type === 'currenTask') {
+                this.updateTask(data.currentTask);
+            }
             if (data.type == 'enterDiscussion') {
                 this.scene.start('DiscussionScene', { socket: this.socket });
             }
@@ -167,7 +167,7 @@ export class MainGameScene extends Phaser.Scene {
             { description: 'プロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
             { description: '"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
             { description: '過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
-            { description: '新しい機能を開発するために，"feature-xyz"という名前のブランチを作成してください．\nそのブランチでMonster.javaを作成し\nリモートにpushしてください．', type: 'check-newbranch'},
+            { description: '新しい機能を開発するために，"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
             { description: 'feature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
             { description: 'プロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
         ];
@@ -187,6 +187,11 @@ export class MainGameScene extends Phaser.Scene {
 
     showMessage(message) {
         this.messageText.setText(message);
+    }
+
+    updateTask(task) {
+        this.currentTask = task;
+        this.messageText.setText(task.description);
     }
 
     finishTask() {
