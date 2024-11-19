@@ -26,6 +26,7 @@ export class MainGameScene extends Phaser.Scene {
         this.load.image('hint', '../../assets/images/hint.png');
         this.load.image('check', '../../assets/images/check.png');
         this.load.image('task-clear', '../../assets/images/clear.png');
+        this.load.image('map', '../../assets/images/map.png');
     }
 
     create() {
@@ -42,6 +43,7 @@ export class MainGameScene extends Phaser.Scene {
         this.createCheckButton(); // Checkボタンを作成
         this.createTerminalButton(); // Terminalボタンを作成
         this.createReportButton(); // Reportボタンを作成
+        this.createMap();           // Mapの表示
         this.createPlayer();       // プレイヤーを作成
         this.setupInput();         // 入力設定
         this.setupSocketListeners(); // ソケットリスナの設定
@@ -79,10 +81,10 @@ export class MainGameScene extends Phaser.Scene {
         const buttonScale = 0.5;
         const buttonWidth = this.textures.get('terminalButton').getSourceImage().width * buttonScale;
         const buttonHeight = this.textures.get('terminalButton').getSourceImage().height * buttonScale;
-
-        const x = this.cameras.main.width - buttonWidth / 2 - 10;
-        const y = this.cameras.main.height - buttonHeight / 2 - 10;
-
+    
+        const x = buttonWidth / 2 + 10; // 左端に配置
+        const y = this.cameras.main.height - buttonHeight / 2 - 10; // 画面下端に近い位置
+    
         this.add.image(x, y, 'terminalButton')
             .setInteractive()
             .setScale(buttonScale)
@@ -150,14 +152,20 @@ export class MainGameScene extends Phaser.Scene {
         const buttonWidth = this.textures.get('check').getSourceImage().width * buttonScale;
         const buttonHeight = this.textures.get('check').getSourceImage().height * buttonScale;
 
-        const x = this.cameras.main.width - buttonWidth / 2 - 10;
-        const y = buttonHeight / 2 + 200;
+        const x = this.cameras.main.width - buttonWidth / 2 - 20;
+        const y = this.cameras.main.height - buttonHeight / 2 - 10
 
-        this.add.image(x - 35, y, 'check')
+        this.add.image(x, y, 'check')
             .setInteractive()
             .setScale(buttonScale)
             .on('pointerdown', () => this.checkTask());
 
+    }
+
+    createMap() {
+        this.map = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'map')
+            .setInteractive()
+            .setScale(0.3)
     }
 
 
@@ -265,7 +273,7 @@ export class MainGameScene extends Phaser.Scene {
         .then(data => {
             if (data.success) {
                 // this.messageText.setText('タスクを完了しました: ' + data.message);
-                this.showPopUpWindow('タスクを完了しました: ' + data.message);
+                // this.showPopUpWindow('タスクを完了しました: ' + data.message);
                 this.clearTask();
             } else {
                 // this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
@@ -281,6 +289,7 @@ export class MainGameScene extends Phaser.Scene {
     
 
     moveToNextTask() {
+        this.walkPlayer();
         this.currentTaskIndex++;
 
         if (this.currentTaskIndex < this.tasks.length) {
@@ -293,20 +302,12 @@ export class MainGameScene extends Phaser.Scene {
     clearTask() {
         const message = JSON.stringify({ type: 'clearTask' });
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.showTaskClearMessage();
             this.socket.send(message);
         } else {
             console.warn('Socket is not open. Cannot send message.');
         }
     }
-
-    // moveToNextTask() {
-    //     const message = JSON.stringify({ type: 'moveToNextTask' });
-    //     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-    //         this.socket.send(message);
-    //     } else {
-    //         console.warn('Socket is not open. Cannot send message.');
-    //     }
-    // }
     
     
     
@@ -348,28 +349,68 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     createPlayer() {
-        this.player = this.physics.add.sprite(400, 300, 'player');
+        this.player = this.physics.add.sprite(this.cameras.main.centerX - 618, this.cameras.main.centerY - 22, 'player');
         this.player.setCollideWorldBounds(true);
     }
 
+    walkPlayer() {
+        const moveDistance = 101;
+        this.tweens.add({
+            targets: this.player,
+            x: this.player.x + moveDistance,
+            duration: 500, // 0.5秒で移動
+            ease: 'Power2',
+        });
+    }
+
+    showTaskClearMessage() {
+        const x = this.cameras.main.centerX;
+        const y = this.cameras.main.centerY - 200;
+    
+        const taskClearImage = this.add.image(x, y, 'task-clear').setScale(0.5).setAlpha(0);
+    
+        // アニメーションでフェードイン
+        this.tweens.add({
+            targets: taskClearImage,
+            alpha: 1,         // フェードイン: 完全に表示される
+            duration: 500,    // 0.5秒かけてフェードイン
+            ease: 'Power2',
+            onComplete: () => {
+                // 表示後、一定時間保持
+                this.time.delayedCall(500, () => {
+                    // フェードアウトのアニメーション
+                    this.tweens.add({
+                        targets: taskClearImage,
+                        alpha: 0,     // フェードアウト: 完全に消える
+                        duration: 500,
+                        ease: 'Power2',
+                        onComplete: () => {
+                            taskClearImage.destroy(); // 画像を削除
+                        }
+                    });
+                });
+            }
+        });
+    }
+
     setupInput() {
-        this.cursors = this.input.keyboard.createCursorKeys();
+        // this.cursors = this.input.keyboard.createCursorKeys();
     }
 
     update() {
-        this.player.setVelocity(0);
+        // this.player.setVelocity(0);
 
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160);
-        }
+        // if (this.cursors.left.isDown) {
+        //     this.player.setVelocityX(-160);
+        // } else if (this.cursors.right.isDown) {
+        //     this.player.setVelocityX(160);
+        // }
 
-        if (this.cursors.up.isDown) {
-            this.player.setVelocityY(-160);
-        } else if (this.cursors.down.isDown) {
-            this.player.setVelocityY(160);
-        }
+        // if (this.cursors.up.isDown) {
+        //     this.player.setVelocityY(-160);
+        // } else if (this.cursors.down.isDown) {
+        //     this.player.setVelocityY(160);
+        // }
     }
 
     handleButtonClick() {
