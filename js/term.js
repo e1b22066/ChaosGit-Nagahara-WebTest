@@ -9,12 +9,8 @@ const term = new Terminal({
 
 term.open(document.getElementById('terminal'));
 
+// ここのlocalhostの部分を変える
 const socket = new WebSocket('ws://localhost:6060');
-
-// basic commands
-const cd = 'cd ~/Documents/Development/Last-project/shell-scripts\n';
-const reCd = 'cd -\n';
-const clear = 'clear\n';
 
 socket.addEventListener('open', function (event) {
     term.onKey(function (e) {
@@ -53,47 +49,7 @@ socket.addEventListener('open', function (event) {
     });
 });
 
-document.getElementById('addStrangeFileButton').addEventListener('click', function () {
-    const execute = './touchFile.sh\n';
-    socket.send(cd);
-    socket.send(execute);
-    socket.send(reCd);
-});
 
-document.getElementById('destroyRepositoryButton').addEventListener('click', function () {
-    const execute = './rmGitdir.sh\n';
-    socket.send(cd);
-    socket.send(execute);
-    socket.send(reCd);
-});
-
-document.getElementById('rewriteRemoteURL').addEventListener('click', function () {
-    const execute = './rewriteURL.sh\n';
-    socket.send(cd);
-    socket.send(execute);
-    socket.send(reCd);
-});
-
-document.getElementById('createBranchButton').addEventListener('click', function () {
-    const execute = './createBranch.sh\n';
-    socket.send(cd);
-    socket.send(execute);
-    socket.send(reCd);
-});
-
-document.getElementById('rmRemoteBranchButton').addEventListener('click', function () {
-    const execute = './rmRemoteBr.sh\n';
-    socket.send(cd);
-    socket.send(execute);
-    socket.send(reCd);
-});
-
-document.getElementById('resetButton').addEventListener('click', function () {
-    const execute = './reset.sh\n';
-    socket.send(cd);
-    socket.send(execute);
-    socket.send(reCd);
-});
 
 function closeTerminal() {
     if (socket) {

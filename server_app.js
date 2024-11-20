@@ -19,7 +19,26 @@ const server = http.createServer(app);
 
 // Create a WebSocket server using the HTTP server
 const wss = new WebSocketServer({ server });
-let players = [];
+
+let gameState = {
+  currentTaskIndex: 0,
+  players: [],
+};
+
+function getCurrenGameState() {
+  return gameState;
+}
+
+function broadcastGameState() {
+  const stateMessage = JSON.stringify({ type: 'syncState', state: gameState });
+  gameState.players.forEach(player => player.send(stateMessage));
+}
+
+function advanceTask() {
+  gameState.currentTaskIndex++;
+  console.log(gameState.currentTaskIndex);
+  broadcastGameState();
+}
 
 const sabotageMap = {
   'sabo-pushRemote':'./shell-scripts/sabotages/pushRemote.sh',
@@ -92,24 +111,25 @@ app.post('/check-task', (req, res) => {
 });
 
 wss.on('connection', (ws) => {
-  players.push(ws);
-  console.log(`Player connected. Total players: ${players.length}`);
+  gameState.players.push(ws);
+  console.log(`Player connected. Total players: ${gameState.players.length}`);
 
   // Notify all clients about the number of connected players
-  broadcast({ type: 'playerCount', count: players.length });
+  broadcast({ type: 'playerCount', count: gameState.players.length });
 
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
 
       // Start game
-      if (data.type === 'startGame' && players.length >= 2) {
+      if (data.type === 'startGame' && gameState.players.length >= 2) {
         broadcast({ type: 'startGame' });
       }
 
       // Synchronize task progress
       if (data.type === 'clearTask') {
-        broadcast({ type: 'moveToNextTask'});
+        advanceTask();
+        broadcastGameState();
       }
 
       // Trigger discussion phase
@@ -123,14 +143,14 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    players = players.filter(player => player !== ws);
-    console.log(`Player disconnected. Total players: ${players.length}`);
-    broadcast({ type: 'playerCount', count: players.length });
+    gameState.players = gameState.players.filter(player => player !== ws);
+    console.log(`Player disconnected. Total players: ${gameState.players.length}`);
+    broadcast({ type: 'playerCount', count: gameState.players.length });
   });
 });
 
 function broadcast(data) {
-  players.forEach((player) => {
+  gameState.players.forEach((player) => {
     player.send(JSON.stringify(data));
   });
 }

@@ -51,8 +51,10 @@ export class MainGameScene extends Phaser.Scene {
         
         this.socket.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
-            if (data.type === 'currenTask') {
-                this.updateTask(data.currentTask);
+
+            if (data.type === 'syncState') {
+                this.updateGameState(data.state);
+                this.moveToNextTask();
             }
 
             if (data.type == 'enterDiscussion') {
@@ -65,6 +67,12 @@ export class MainGameScene extends Phaser.Scene {
 
         });
 
+    }
+
+    updateGameState(state) {
+        this.currentTaskIndex = state.currentTaskIndex;
+        this.showCurrentTask();
+        
     }
 
     setupSocketListeners() {
@@ -172,18 +180,18 @@ export class MainGameScene extends Phaser.Scene {
 
     scenario() {
         this.tasks = [
-            { description: 'あなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
-            { description: 'Gitで作業を記録するために，名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．', type: 'check-usr'},
-            { description: 'Main.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．', type: 'check-initcommit'},
-            { description: 'Gitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n', type: 'check-branch'},
-            { description: 'リモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'},
-            { description: '作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．', type: 'check-push'},
-            { description: 'プロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
-            { description: '"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
-            { description: '過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
-            { description: '新しい機能を開発するために，"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
-            { description: 'feature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
-            { description: 'プロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
+            { description: 'タスク1：\nあなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
+            { description: 'タスク2：\nGitで作業を記録するために，名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．', type: 'check-usr'},
+            { description: 'タスク3：\nMain.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．', type: 'check-initcommit'},
+            { description: 'タスク4：\nGitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n', type: 'check-branch'},
+            { description: 'タスク5：\nリモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'},
+            { description: 'タスク6：\n作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．', type: 'check-push'},
+            { description: 'タスク7：\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
+            { description: 'タスク8：\n"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
+            { description: 'タスク9：\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
+            { description: 'タスク10：\n新しい機能を開発するために，"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
+            { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
+            { description: 'タスク12：\nプロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
         ];
         // this.currentTaskIndex = 0;
         this.showCurrentTask();
@@ -208,11 +216,6 @@ export class MainGameScene extends Phaser.Scene {
         this.messageText.setText(task.description);
     }
 
-    finishTask() {
-        this.currentTaskIndex++;
-        this.showCurrentTask();
-    }
-    
     showPopUpWindow(message) {
         // タスクウィンドウを表示
         const taskWindowScale = 0.3;
@@ -290,11 +293,8 @@ export class MainGameScene extends Phaser.Scene {
 
     moveToNextTask() {
         this.walkPlayer();
-        this.currentTaskIndex++;
 
-        if (this.currentTaskIndex < this.tasks.length) {
-            this.showCurrentTask();
-        } else {
+        if (this.currentTaskIndex >= this.tasks.length) {
             this.messageText.setText('すべてのタスクを完了しました！');
         }
     }
