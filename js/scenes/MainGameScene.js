@@ -1,10 +1,11 @@
-import TaskValidator from '../TaskValidator.js';
-
 export class MainGameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainGameScene' });
         this.tasks = [];
         this.currentTaskIndex = 0;
+        this.gameState  = {
+            playerPosition: { x: null, y: null }
+        };
     }
 
     init(data) {
@@ -30,7 +31,6 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     create() {
-        this.taskValidator = new TaskValidator();
         this.createMessageWindow(); // メッセージウィンドウを作成
 
         // メッセージを表示するテキスト（初期は空の文字列）
@@ -185,7 +185,7 @@ export class MainGameScene extends Phaser.Scene {
             { description: 'feature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
             { description: 'プロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
         ];
-        this.currentTaskIndex = 0;
+        // this.currentTaskIndex = 0;
         this.showCurrentTask();
     }
 
@@ -349,8 +349,17 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     createPlayer() {
-        this.player = this.physics.add.sprite(this.cameras.main.centerX - 618, this.cameras.main.centerY - 22, 'player');
+
+        if (this.currentTaskIndex > 0) {
+            this.player = this.physics.add.sprite(this.gameState.playerPosition.x, this.gameState.playerPosition.y, 'player');
+        } else {
+            this.player = this.physics.add.sprite(this.cameras.main.centerX - 618, this.cameras.main.centerY - 22, 'player');
+        }
+        
         this.player.setCollideWorldBounds(true);
+
+        this.gameState.playerPosition.x = this.player.x;
+        this.gameState.playerPosition.y = this.player.y;
     }
 
     walkPlayer() {
@@ -360,6 +369,13 @@ export class MainGameScene extends Phaser.Scene {
             x: this.player.x + moveDistance,
             duration: 500, // 0.5秒で移動
             ease: 'Power2',
+            onComplete: () => {
+                // 移動完了後の位置をgameStateに保存
+                this.gameState.playerPosition.x = this.player.x;
+                this.gameState.playerPosition.y = this.player.y;
+
+                console.log('Player Position:', this.gameState.playerPosition);
+            }
         });
     }
 
@@ -398,19 +414,8 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     update() {
-        // this.player.setVelocity(0);
-
-        // if (this.cursors.left.isDown) {
-        //     this.player.setVelocityX(-160);
-        // } else if (this.cursors.right.isDown) {
-        //     this.player.setVelocityX(160);
-        // }
-
-        // if (this.cursors.up.isDown) {
-        //     this.player.setVelocityY(-160);
-        // } else if (this.cursors.down.isDown) {
-        //     this.player.setVelocityY(160);
-        // }
+        this.gameState.playerPosition.x = this.player.x;
+        this.gameState.playerPosition.y = this.player.y;
     }
 
     handleButtonClick() {

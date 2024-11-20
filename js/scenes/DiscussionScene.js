@@ -6,6 +6,7 @@ export class DiscussionScene extends Phaser.Scene {
 
     preload() {
         this.load.image('dummy-button', '../../assets/images/dummy-button.png');
+        this.load.image('terminalButton', '../../assets/images/terminal-button.png');
     }
 
     init(data) {
@@ -38,6 +39,7 @@ export class DiscussionScene extends Phaser.Scene {
             loop: true
         });
 
+        this.createTerminalButton();
         // タイマーを開始する
         // this.startTimer();
     }
@@ -60,6 +62,24 @@ export class DiscussionScene extends Phaser.Scene {
             this.timeEvent.remove();
             this.scene.start('QuizScene', { socket: this.socket });
         }
+    }
+
+    createTerminalButton() {
+        const buttonScale = 0.5;
+        const buttonWidth = this.textures.get('terminalButton').getSourceImage().width * buttonScale;
+        const buttonHeight = this.textures.get('terminalButton').getSourceImage().height * buttonScale;
+    
+        const x = buttonWidth / 2 + 10; // 左端に配置
+        const y = this.cameras.main.height - buttonHeight / 2 - 10; // 画面下端に近い位置
+    
+        this.add.image(x, y, 'terminalButton')
+            .setInteractive()
+            .setScale(buttonScale)
+            .on('pointerdown', () => this.openTerminal());
+    }
+
+    openTerminal() {
+        window.open('../../term.html', '_blank');
     }
 
     // updateTimer() {
