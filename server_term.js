@@ -16,12 +16,17 @@ const filesDirectory = '';
 const wss = new WebSocketServer({ port: 6060 });
 
 wss.on('connection', function connection(ws) {
+
+    const initialDirectory = '/home/dagechan/Projects/Bachelor/workspace';
+
     // ターミナルを起動
     const shell = pty.spawn('bash', [], {
         name: 'xterm-color',
-        cwd: process.env.HOME,
+        cwd: initialDirectory,
         env: process.env
     });
+
+    
 
     // ターミナルのデータをクライアントに送信
     shell.on('data', function (data) {

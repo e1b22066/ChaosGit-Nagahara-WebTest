@@ -1,6 +1,11 @@
 export class MainGameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainGameScene' });
+        this.tasks = [];
+        this.currentTaskIndex = 0;
+        this.gameState  = {
+            playerPosition: { x: null, y: null }
+        };
     }
 
     init(data) {
@@ -18,24 +23,15 @@ export class MainGameScene extends Phaser.Scene {
         this.load.image('reportButton', '../../assets/images/report-button.png');
         this.load.image('close-term-button', '../../assets/images/close-term-button.png');
         this.load.image('close-button', '../../assets/images/close.png');
-        this.load.image('task-window', '../../assets/images/task-window.png');
+        this.load.image('task-window', '../../assets/images/alert.png');
         this.load.image('hint', '../../assets/images/hint.png');
         this.load.image('check', '../../assets/images/check.png');
+        this.load.image('task-clear', '../../assets/images/clear.png');
+        this.load.image('map', '../../assets/images/map.png');
     }
 
     create() {
-        this.createGitHubButton(); // GitHubボタンを作成
-        this.createTaskButton(this.cameras.main.centerX + 100, this.cameras.main.centerY, 0.2, 'リモートリポジトリを　クローンしてください');   // Taskボタンを作成１
-        this.createTaskButton(this.cameras.main.centerX - 300, this.cameras.main.centerY - 10, 0.2, 'ブランチ名をmasterからmainに　変更してください');  // Taskボタンを作成2
-        this.createTaskButton(this.cameras.main.centerX - 100, this.cameras.main.centerY - 160, 0.2, 'ターミナル上で　コミット履歴を確認してください');  // Taskボタンを作成3
-        this.createTaskButton2();
-        this.createTerminalButton(); // Terminalボタンを作成
-        this.createReportButton(); // Reportボタンを作成
-        this.createPlayer();       // プレイヤーを作成
         this.createMessageWindow(); // メッセージウィンドウを作成
-        this.setupInput();         // 入力設定
-        this.setupSocketListeners(); // ソケットリスナの設定
-        
 
         // メッセージを表示するテキスト（初期は空の文字列）
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, '', {
@@ -43,13 +39,40 @@ export class MainGameScene extends Phaser.Scene {
             fill: '#000'
         }).setOrigin(0.5, 0.5);
 
+        this.createGitHubButton(); // GitHubボタンを作成
+        this.createCheckButton(); // Checkボタンを作成
+        this.createTerminalButton(); // Terminalボタンを作成
+        this.createReportButton(); // Reportボタンを作成
+        this.createMap();           // Mapの表示
+        this.createPlayer();       // プレイヤーを作成
+        this.setupInput();         // 入力設定
+        this.setupSocketListeners(); // ソケットリスナの設定
+        this.scenario();
+        
         this.socket.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
+
+            if (data.type === 'syncState') {
+                this.updateGameState(data.state);
+                this.moveToNextTask();
+            }
+
             if (data.type == 'enterDiscussion') {
                 this.scene.start('DiscussionScene', { socket: this.socket });
             }
+            
+            if (data.type == 'moveToNextTask') {
+                this.moveToNextTask();
+            }
+
         });
 
+    }
+
+    updateGameState(state) {
+        this.currentTaskIndex = state.currentTaskIndex;
+        this.showCurrentTask();
+        
     }
 
     setupSocketListeners() {
@@ -66,10 +89,10 @@ export class MainGameScene extends Phaser.Scene {
         const buttonScale = 0.5;
         const buttonWidth = this.textures.get('terminalButton').getSourceImage().width * buttonScale;
         const buttonHeight = this.textures.get('terminalButton').getSourceImage().height * buttonScale;
-
-        const x = this.cameras.main.width - buttonWidth / 2 - 10;
-        const y = this.cameras.main.height - buttonHeight / 2 - 10;
-
+    
+        const x = buttonWidth / 2 + 10; // 左端に配置
+        const y = this.cameras.main.height - buttonHeight / 2 - 10; // 画面下端に近い位置
+    
         this.add.image(x, y, 'terminalButton')
             .setInteractive()
             .setScale(buttonScale)
@@ -110,7 +133,7 @@ export class MainGameScene extends Phaser.Scene {
         this.add.image(x, y, 'Task')
             .setInteractive()
             .setScale(buttonScale)
-            .on('pointerdown', () => this.showTaskWindow(message));
+            .on('pointerdown', () => this.showPopUpWindow(message));
     }
 
     createTaskButton2() {
@@ -130,8 +153,70 @@ export class MainGameScene extends Phaser.Scene {
                 this.scene.start('CooperationTaskScene'); 
             });
     }
-    
-    showTaskWindow(message) {
+
+    createCheckButton(){
+
+        const buttonScale = 0.5;
+        const buttonWidth = this.textures.get('check').getSourceImage().width * buttonScale;
+        const buttonHeight = this.textures.get('check').getSourceImage().height * buttonScale;
+
+        const x = this.cameras.main.width - buttonWidth / 2 - 20;
+        const y = this.cameras.main.height - buttonHeight / 2 - 10
+
+        this.add.image(x, y, 'check')
+            .setInteractive()
+            .setScale(buttonScale)
+            .on('pointerdown', () => this.checkTask());
+
+    }
+
+    createMap() {
+        this.map = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'map')
+            .setInteractive()
+            .setScale(0.3)
+    }
+
+
+
+    scenario() {
+        this.tasks = [
+            { description: 'タスク1：\nあなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
+            { description: 'タスク2：\nGitで作業を記録するために，名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．', type: 'check-usr'},
+            { description: 'タスク3：\nMain.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．', type: 'check-initcommit'},
+            { description: 'タスク4：\nGitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n', type: 'check-branch'},
+            { description: 'タスク5：\nリモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'},
+            { description: 'タスク6：\n作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．', type: 'check-push'},
+            { description: 'タスク7：\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
+            { description: 'タスク8：\n"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
+            { description: 'タスク9：\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
+            { description: 'タスク10：\n新しい機能を開発するために，"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
+            { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
+            { description: 'タスク12：\nプロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
+        ];
+        // this.currentTaskIndex = 0;
+        this.showCurrentTask();
+    }
+
+    showCurrentTask() {
+        const currentTask = this.tasks[this.currentTaskIndex];
+        this.messageText.setText(currentTask.description);
+        // if (currentTask) {
+        //     this.showMessage(currentTask.description);
+        // } else {
+        //     this.messageText.setText('すべてのタスクが完了しました．');
+        // }
+    }
+
+    showMessage(message) {
+        this.messageText.setText(message);
+    }
+
+    updateTask(task) {
+        this.currentTask = task;
+        this.messageText.setText(task.description);
+    }
+
+    showPopUpWindow(message) {
         // タスクウィンドウを表示
         const taskWindowScale = 0.3;
         this.taskWindow = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'task-window')
@@ -149,10 +234,10 @@ export class MainGameScene extends Phaser.Scene {
         }).setOrigin(0.5, 0.5);
     
         // ヒントボタンを作成
-        this.hintButton = this.add.image(this.taskWindow.x - 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
-            .setInteractive()
-            .setScale(0.2)
-            .on('pointerdown', () => this.showHint());
+        // this.hintButton = this.add.image(this.taskWindow.x - 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
+        //     .setInteractive()
+        //     .setScale(0.2)
+        //     .on('pointerdown', () => this.showHint());
     
         // クローズボタンを作成
         this.closeButton = this.add.image(this.taskWindow.x + 500, this.taskWindow.y - taskWindowHeight / 2 + 80, 'close-button')
@@ -161,10 +246,10 @@ export class MainGameScene extends Phaser.Scene {
             .on('pointerdown', () => this.closeTaskWindow());
 
         // チェックボタンを作成
-        this.checkButton = this.add.image(this.taskWindow.x + 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'check')
-            .setInteractive()
-            .setScale(0.2)
-            .on('pointerdown', () => this.checkTask());
+        // this.checkButton = this.add.image(this.taskWindow.x + 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'check')
+        //     .setInteractive()
+        //     .setScale(0.2)
+        //     .on('pointerdown', () => this.checkTask());
     }
     
     showHint() {
@@ -173,33 +258,66 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     checkTask() {
-        fetch('http://localhost:3000/check-branch', {
+        const currentTask = this.tasks[this.currentTaskIndex];
+        
+        if (!currentTask) {
+            this.messageText.setText('No task available to check.');
+            return;
+        }
+    
+        fetch('http://localhost:8080/check-task', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            body: JSON.stringify({ type: currentTask.type }) // Use the type from the current task
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                this.messageText.setText('タスクを完了しました: ' + data.message);
+                // this.messageText.setText('タスクを完了しました: ' + data.message);
+                // this.showPopUpWindow('タスクを完了しました: ' + data.message);
+                this.clearTask();
             } else {
-                this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
+                // this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
+                this.showPopUpWindow('タスクの実行に失敗しました: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            this.messageText.setText('エラーが発生しました');
+            // this.messageText.setText('エラーが発生しました');
+            this.showPopUpWindow('エラーが発生しました');
         });
     }
+    
+
+    moveToNextTask() {
+        this.walkPlayer();
+
+        if (this.currentTaskIndex >= this.tasks.length) {
+            this.messageText.setText('すべてのタスクを完了しました！');
+        }
+    }
+
+    clearTask() {
+        const message = JSON.stringify({ type: 'clearTask' });
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.showTaskClearMessage();
+            this.socket.send(message);
+        } else {
+            console.warn('Socket is not open. Cannot send message.');
+        }
+    }
+    
+    
     
     closeTaskWindow() {
         // タスクウィンドウに表示されているボタンを一緒に削除
         this.taskWindow.destroy();
         this.taskMessage.destroy();
-        this.hintButton.destroy();
         this.closeButton.destroy();
-        this.checkButton.destroy();
+        // this.hintButton.destroy();
+        // this.checkButton.destroy();
     }
 
     createReportButton() {
@@ -231,35 +349,76 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     createPlayer() {
-        this.player = this.physics.add.sprite(400, 300, 'player');
+
+        if (this.currentTaskIndex > 0) {
+            this.player = this.physics.add.sprite(this.gameState.playerPosition.x, this.gameState.playerPosition.y, 'player');
+        } else {
+            this.player = this.physics.add.sprite(this.cameras.main.centerX - 618, this.cameras.main.centerY - 22, 'player');
+        }
+        
         this.player.setCollideWorldBounds(true);
+
+        this.gameState.playerPosition.x = this.player.x;
+        this.gameState.playerPosition.y = this.player.y;
+    }
+
+    walkPlayer() {
+        const moveDistance = 101;
+        this.tweens.add({
+            targets: this.player,
+            x: this.player.x + moveDistance,
+            duration: 500, // 0.5秒で移動
+            ease: 'Power2',
+            onComplete: () => {
+                // 移動完了後の位置をgameStateに保存
+                this.gameState.playerPosition.x = this.player.x;
+                this.gameState.playerPosition.y = this.player.y;
+
+                console.log('Player Position:', this.gameState.playerPosition);
+            }
+        });
+    }
+
+    showTaskClearMessage() {
+        const x = this.cameras.main.centerX;
+        const y = this.cameras.main.centerY - 200;
+    
+        const taskClearImage = this.add.image(x, y, 'task-clear').setScale(0.5).setAlpha(0);
+    
+        // アニメーションでフェードイン
+        this.tweens.add({
+            targets: taskClearImage,
+            alpha: 1,         // フェードイン: 完全に表示される
+            duration: 500,    // 0.5秒かけてフェードイン
+            ease: 'Power2',
+            onComplete: () => {
+                // 表示後、一定時間保持
+                this.time.delayedCall(500, () => {
+                    // フェードアウトのアニメーション
+                    this.tweens.add({
+                        targets: taskClearImage,
+                        alpha: 0,     // フェードアウト: 完全に消える
+                        duration: 500,
+                        ease: 'Power2',
+                        onComplete: () => {
+                            taskClearImage.destroy(); // 画像を削除
+                        }
+                    });
+                });
+            }
+        });
     }
 
     setupInput() {
-        this.cursors = this.input.keyboard.createCursorKeys();
+        // this.cursors = this.input.keyboard.createCursorKeys();
     }
 
     update() {
-        this.player.setVelocity(0);
-
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160);
-        }
-
-        if (this.cursors.up.isDown) {
-            this.player.setVelocityY(-160);
-        } else if (this.cursors.down.isDown) {
-            this.player.setVelocityY(160);
-        }
-    }
-
-    showMessage(message) {
-        this.messageText.setText(message);
+        this.gameState.playerPosition.x = this.player.x;
+        this.gameState.playerPosition.y = this.player.y;
     }
 
     handleButtonClick() {
-        window.open('https://github.com/Dagechan/chaos-repo');
+        window.open('https://github.com/Dagechan/WorkSpace');
     }
 }

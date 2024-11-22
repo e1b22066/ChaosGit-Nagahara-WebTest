@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # specify the directory to check
-REPO_PATH="workspace/"
+REPO_PATH="../workspace/"
+# REPO_PATH="workspace/"
+
 
 # check if the directory exists
 if [ -d "$REPO_PATH" ]; then
