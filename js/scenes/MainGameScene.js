@@ -181,7 +181,7 @@ export class MainGameScene extends Phaser.Scene {
     scenario() {
         this.tasks = [
             { description: 'タスク1：\nあなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
-            { description: 'タスク2：\nGitで作業を記録するために，名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．', type: 'check-usr'},
+            { description: 'タスク2：\nGitで作業を記録するために，指定の名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．\n名前：user\nメールアドレス：user@example.com', type: 'check-usr'},
             { description: 'タスク3：\nMain.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．', type: 'check-initcommit'},
             { description: 'タスク4：\nGitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n', type: 'check-branch'},
             { description: 'タスク5：\nリモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'},
@@ -321,7 +321,7 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     createReportButton() {
-        const buttonScale = 0.3;
+        const buttonScale = 0.4;
         const buttonWidth = this.textures.get('reportButton').getSourceImage().width * buttonScale;
         const buttonHeight = this.textures.get('reportButton').getSourceImage().height * buttonScale;
 

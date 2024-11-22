@@ -7,6 +7,7 @@ export class DiscussionScene extends Phaser.Scene {
     preload() {
         this.load.image('dummy-button', '../../assets/images/dummy-button.png');
         this.load.image('terminalButton', '../../assets/images/terminal-button.png');
+        this.load.image('message', '../../assets/images/message.png');
     }
 
     init(data) {
@@ -15,6 +16,14 @@ export class DiscussionScene extends Phaser.Scene {
 
     create(data) {
         this.socket = data.socket;
+
+        this.createMessageWindow(); // メッセージウィンドウを作成
+
+        // メッセージを表示するテキスト（初期は空の文字列）
+        this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, 'レポートをした人はどのような障害が発生したか説明してチームで共有してください．\nその後，どのようにして修復するのかチームで検討してください．\n障害を共有後，メイン画面に戻ってレポートした人以外が障害の復旧にあたってください．', {
+            fontSize: '24px',
+            fill: '#000'
+        }).setOrigin(0.5, 0.5);
 
         // show the timer
         this.timerText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 50, `Time Left: 60`, {
@@ -60,7 +69,7 @@ export class DiscussionScene extends Phaser.Scene {
             this.timerText.setText(`Time: ${this.timeLeft}`);
         } else {
             this.timeEvent.remove();
-            this.scene.start('QuizScene', { socket: this.socket });
+            this.scene.start('MainGameScene', { socket: this.socket });
         }
     }
 
@@ -80,6 +89,12 @@ export class DiscussionScene extends Phaser.Scene {
 
     openTerminal() {
         window.open('../../term.html', '_blank');
+    }
+
+    createMessageWindow() {
+        this.messageWindow = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY + 300, 'message')
+            .setInteractive()
+            .setScale(0.3)
     }
 
     // updateTimer() {
