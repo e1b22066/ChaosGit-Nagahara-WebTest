@@ -9,7 +9,13 @@ const term = new Terminal({
 
 term.open(document.getElementById('terminal'));
 
-// ここのlocalhostの部分を変える
+/* 
+**************************************************************
+    実験参加者の皆様へ
+　　この下のアドレスを指定されたものに書き換えてください
+    例： const socket = new WebSocket('ws:192.168.xx.xx:6060');
+**************************************************************
+*/
 const socket = new WebSocket('ws://localhost:6060');
 
 socket.addEventListener('open', function (event) {

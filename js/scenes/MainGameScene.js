@@ -189,11 +189,10 @@ export class MainGameScene extends Phaser.Scene {
             { description: 'タスク7：\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
             { description: 'タスク8：\n"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
             { description: 'タスク9：\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
-            { description: 'タスク10：\n新しい機能を開発するために，"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
+            { description: 'タスク10：\ngit logコマンドで今までのコミットが正しいか確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
             { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
             { description: 'タスク12：\nプロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
         ];
-        // this.currentTaskIndex = 0;
         this.showCurrentTask();
     }
 
@@ -233,27 +232,14 @@ export class MainGameScene extends Phaser.Scene {
             fill: '#000'
         }).setOrigin(0.5, 0.5);
     
-        // ヒントボタンを作成
-        // this.hintButton = this.add.image(this.taskWindow.x - 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
-        //     .setInteractive()
-        //     .setScale(0.2)
-        //     .on('pointerdown', () => this.showHint());
-    
         // クローズボタンを作成
         this.closeButton = this.add.image(this.taskWindow.x + 500, this.taskWindow.y - taskWindowHeight / 2 + 80, 'close-button')
             .setInteractive()
             .setScale(0.2)
-            .on('pointerdown', () => this.closeTaskWindow());
-
-        // チェックボタンを作成
-        // this.checkButton = this.add.image(this.taskWindow.x + 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'check')
-        //     .setInteractive()
-        //     .setScale(0.2)
-        //     .on('pointerdown', () => this.checkTask());
+            .on('pointerdown', () => this.closeTaskWindow());;
     }
     
     showHint() {
-        // ヒントの表示を行う処理
         this.messageText.setText('');
     }
 
@@ -264,7 +250,13 @@ export class MainGameScene extends Phaser.Scene {
             this.messageText.setText('No task available to check.');
             return;
         }
-    
+        /* 
+        **************************************************************
+            実験参加者の皆様へ
+        　　この下のアドレスを指定されたものに書き換えてください
+            例： fetch('http://192.169.xx.xx:8080/check-task', {
+        **************************************************************
+        */
         fetch('http://localhost:8080/check-task', {
             method: 'POST',
             headers: {

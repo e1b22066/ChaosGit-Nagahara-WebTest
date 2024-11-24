@@ -5,8 +5,11 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
+import minimist from 'minimist';
 
 const PORT = 8080;
+
+const args = minimist(process.argv.slice(2));
 
 // Create an Express app
 const app = express();
@@ -24,6 +27,21 @@ let gameState = {
   currentTaskIndex: 0,
   players: [],
 };
+
+// ex) node server.js --taskIndex=3
+// give specific taskIndex number - 2
+
+if (args.taskIndex !== undefined) {
+  const initialTaskIndex = parseInt(args.taskIndex, 10);
+  if (!isNaN(initialTaskIndex) && initialTaskIndex >= 0) {
+    gameState.currentTaskIndex = initialTaskIndex;
+    console.log(`Starting with specified taskIndex: ${initialTaskIndex}`);
+  } else {
+    console.warn(`Invalid taskIndex provided: ${args.taskIndex}. Starting with taskIndex 0.`);
+  }
+} else {
+  console.log(`No taskIndex specified. Starting with default taskIndex: 0.`);
+}
 
 function getCurrenGameState() {
   return gameState;

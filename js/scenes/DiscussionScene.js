@@ -1,13 +1,14 @@
 export class DiscussionScene extends Phaser.Scene {
     constructor() {
         super({ key: 'DiscussionScene' });
-        this.timerDuration = 10; // タイマーの時間（秒）
+        this.timeLeft = 120; // タイマーの時間（秒）
     }
 
     preload() {
         this.load.image('dummy-button', '../../assets/images/dummy-button.png');
         this.load.image('terminalButton', '../../assets/images/terminal-button.png');
         this.load.image('message', '../../assets/images/message.png');
+        this.load.image('backButton', '../../assets/images/BackButton.png');
     }
 
     init(data) {
@@ -19,6 +20,8 @@ export class DiscussionScene extends Phaser.Scene {
 
         this.createMessageWindow(); // メッセージウィンドウを作成
 
+        this.createBackButotn();
+
         // メッセージを表示するテキスト（初期は空の文字列）
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, 'レポートをした人はどのような障害が発生したか説明してチームで共有してください．\nその後，どのようにして修復するのかチームで検討してください．\n障害を共有後，メイン画面に戻ってレポートした人以外が障害の復旧にあたってください．', {
             fontSize: '24px',
@@ -26,12 +29,11 @@ export class DiscussionScene extends Phaser.Scene {
         }).setOrigin(0.5, 0.5);
 
         // show the timer
-        this.timerText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 50, `Time Left: 60`, {
+        this.timerText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 50, `Time Left: 120`, {
             fontSize: '28px',
             fill: '#000'
         }).setOrigin(0.5);
 
-        this.timeLeft = 10; 
 
         // ディスカッション開始のメッセージ表示
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Discussion Time!', {
@@ -85,6 +87,20 @@ export class DiscussionScene extends Phaser.Scene {
             .setInteractive()
             .setScale(buttonScale)
             .on('pointerdown', () => this.openTerminal());
+    }
+
+    createBackButotn() {
+        const buttonScale = 0.5;
+        const buttonWidth = this.textures.get('backButton').getSourceImage().width * buttonScale;
+        const buttonHeight = this.textures.get('backButton').getSourceImage().height * buttonScale;
+
+        const x = this.cameras.main.width - buttonWidth / 2 - 20;
+        const y = this.cameras.main.height - buttonHeight / 2 - 10
+
+        this.add.image(x, y, 'backButton')
+            .setInteractive()
+            .setScale(buttonScale)
+            .on('pointerdown', () => this.scene.start('MainGameScene'));
     }
 
     openTerminal() {
