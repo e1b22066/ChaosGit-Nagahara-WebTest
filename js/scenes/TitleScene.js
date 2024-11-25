@@ -13,7 +13,7 @@ export class TitleScene extends Phaser.Scene {
             .setScale(0.3)
             .on('pointerdown', () => this.scene.start('RegisterScene'));
 
-        this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 100, 'Chaos Crewmate', { fontSize: '32px', fill: '#fff' })
+        this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 100, 'ChaosGit', { fontSize: '32px', fill: '#fff' })
             .setOrigin(0.5);
     }
 }
