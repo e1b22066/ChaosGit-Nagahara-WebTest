@@ -191,19 +191,19 @@ export class MainGameScene extends Phaser.Scene {
             { description: 'タスク9：\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
             { description: 'タスク10：\ngit logコマンドで今までのコミットが正しいか確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
             { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
-            { description: 'タスク12：\nプロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
+            { description: 'タスク12：\nmainブランチに切り替え，プロジェクトのリリースに向けてv1.0タグを作成し\nタグをリモートへpushしてください．', type: 'check-release'},
         ];
         this.showCurrentTask();
     }
 
     showCurrentTask() {
         const currentTask = this.tasks[this.currentTaskIndex];
-        this.messageText.setText(currentTask.description);
-        // if (currentTask) {
-        //     this.showMessage(currentTask.description);
-        // } else {
-        //     this.messageText.setText('すべてのタスクが完了しました．');
-        // }
+
+        if (this.currentTaskIndex < 12) {
+            this.messageText.setText(currentTask.description);
+        } else {
+            this.showCmpleteMessage();
+        }
     }
 
     showMessage(message) {
@@ -247,14 +247,14 @@ export class MainGameScene extends Phaser.Scene {
         const currentTask = this.tasks[this.currentTaskIndex];
         
         if (!currentTask) {
-            this.messageText.setText('No task available to check.');
+            this.showCmpleteMessage();
             return;
         }
         /* 
         **************************************************************
             実験参加者の皆様へ
         　　この下のアドレスを指定されたものに書き換えてください
-            例： fetch('http://192.169.xx.xx:8080/check-task', {
+            例： fetch('http://192.168.xx.xx:8080/check-task', {
         **************************************************************
         */
         fetch('http://localhost:8080/check-task', {
@@ -267,17 +267,13 @@ export class MainGameScene extends Phaser.Scene {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // this.messageText.setText('タスクを完了しました: ' + data.message);
-                // this.showPopUpWindow('タスクを完了しました: ' + data.message);
                 this.clearTask();
             } else {
-                // this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
                 this.showPopUpWindow('タスクの実行に失敗しました: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            // this.messageText.setText('エラーが発生しました');
             this.showPopUpWindow('エラーが発生しました');
         });
     }
@@ -287,8 +283,12 @@ export class MainGameScene extends Phaser.Scene {
         this.walkPlayer();
 
         if (this.currentTaskIndex >= this.tasks.length) {
-            this.messageText.setText('すべてのタスクを完了しました！');
+            this.showCmpleteMessage();
         }
+    }
+
+    showCmpleteMessage() {
+        this.messageText.setText('すべてのタスクを完了しました！お疲れ様でした！');
     }
 
     clearTask() {
@@ -326,7 +326,6 @@ export class MainGameScene extends Phaser.Scene {
             .setInteractive()
             .setScale(buttonScale)
             .on('pointerdown', () => {
-                // this.scene.start('DiscussionScene'); // クリック時にDiscussionSceneへ移動
                 this.reportIssue();
             });
     }
