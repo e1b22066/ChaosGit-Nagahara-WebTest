@@ -9,11 +9,18 @@ if [ -d "$REPO_PATH" ]; then
   # リポジトリのパスに移動
   cd "$REPO_PATH" || exit 1
 
-  # 現在のブランチが main であることを確認
+  # 現在のブランチを取得
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+  # 現在のブランチが main でない場合、main ブランチに切り替え
   if [ "$CURRENT_BRANCH" != "$TARGET_BRANCH" ]; then
-    echo "Task Incomplete: Current branch is '$CURRENT_BRANCH'. Please switch to '$TARGET_BRANCH'."
-    exit 1
+    echo "Switching to branch '$TARGET_BRANCH'..."
+    if git checkout "$TARGET_BRANCH" > /dev/null 2>&1; then
+      echo "Successfully switched to '$TARGET_BRANCH'."
+    else
+      echo "Failed to switch to branch '$TARGET_BRANCH'. Ensure it exists and try again."
+      exit 1
+    fi
   fi
 
   # タグがローカルに存在し、リモートにプッシュされていることを確認
