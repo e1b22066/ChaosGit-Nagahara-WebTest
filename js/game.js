@@ -10,8 +10,13 @@ import { RegisterScene } from './scenes/RegisterScene.js';
 // ゲームの設定
 const config = {
     type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
+    type: Phaser.AUTO,
+    scale: {
+        mode: Phaser.Scale.FIT, 
+        autoCenter: Phaser.Scale.CENTER_BOTH, 
+        width: 1920, 
+        height: 1080
+    },
     backgroundColor: '#024578',
     parent: 'game-container',
     scene: [TitleScene, RegisterScene, MainGameScene, DiscussionScene, QuizScene, RepairScene, CooperationTaskScene],  // インポートしたシーンを設定

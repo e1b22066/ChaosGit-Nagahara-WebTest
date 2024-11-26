@@ -181,7 +181,7 @@ export class MainGameScene extends Phaser.Scene {
     scenario() {
         this.tasks = [
             { description: 'タスク1：\nあなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
-            { description: 'タスク2：\nGitで作業を記録するために，名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．', type: 'check-usr'},
+            { description: 'タスク2：\nGitで作業を記録するために，指定の名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．\n名前：user\nメールアドレス：user@example.com', type: 'check-usr'},
             { description: 'タスク3：\nMain.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．', type: 'check-initcommit'},
             { description: 'タスク4：\nGitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n', type: 'check-branch'},
             { description: 'タスク5：\nリモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'},
@@ -189,22 +189,21 @@ export class MainGameScene extends Phaser.Scene {
             { description: 'タスク7：\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
             { description: 'タスク8：\n"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
             { description: 'タスク9：\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
-            { description: 'タスク10：\n新しい機能を開発するために，"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
+            { description: 'タスク10：\ngit logコマンドで今までのコミットが正しいか確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
             { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
-            { description: 'タスク12：\nプロジェクトのリリースに向けて，v1.0タグを作成し\nリリース用ブランチ"release/v1.0"を作成してください．\nその後リモートにpushしてください．', type: 'check-release'},
+            { description: 'タスク12：\nmainブランチに切り替え，プロジェクトのリリースに向けてv1.0タグを作成し\nタグをリモートへpushしてください．', type: 'check-release'},
         ];
-        // this.currentTaskIndex = 0;
         this.showCurrentTask();
     }
 
     showCurrentTask() {
         const currentTask = this.tasks[this.currentTaskIndex];
-        this.messageText.setText(currentTask.description);
-        // if (currentTask) {
-        //     this.showMessage(currentTask.description);
-        // } else {
-        //     this.messageText.setText('すべてのタスクが完了しました．');
-        // }
+
+        if (this.currentTaskIndex < 12) {
+            this.messageText.setText(currentTask.description);
+        } else {
+            this.showCmpleteMessage();
+        }
     }
 
     showMessage(message) {
@@ -233,27 +232,14 @@ export class MainGameScene extends Phaser.Scene {
             fill: '#000'
         }).setOrigin(0.5, 0.5);
     
-        // ヒントボタンを作成
-        // this.hintButton = this.add.image(this.taskWindow.x - 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'hint')
-        //     .setInteractive()
-        //     .setScale(0.2)
-        //     .on('pointerdown', () => this.showHint());
-    
         // クローズボタンを作成
         this.closeButton = this.add.image(this.taskWindow.x + 500, this.taskWindow.y - taskWindowHeight / 2 + 80, 'close-button')
             .setInteractive()
             .setScale(0.2)
-            .on('pointerdown', () => this.closeTaskWindow());
-
-        // チェックボタンを作成
-        // this.checkButton = this.add.image(this.taskWindow.x + 100, this.taskWindow.y + taskWindowHeight / 2 - 50, 'check')
-        //     .setInteractive()
-        //     .setScale(0.2)
-        //     .on('pointerdown', () => this.checkTask());
+            .on('pointerdown', () => this.closeTaskWindow());;
     }
     
     showHint() {
-        // ヒントの表示を行う処理
         this.messageText.setText('');
     }
 
@@ -261,10 +247,16 @@ export class MainGameScene extends Phaser.Scene {
         const currentTask = this.tasks[this.currentTaskIndex];
         
         if (!currentTask) {
-            this.messageText.setText('No task available to check.');
+            this.showCmpleteMessage();
             return;
         }
-    
+        /* 
+        **************************************************************
+            実験参加者の皆様へ
+        　　この下のアドレスを指定されたものに書き換えてください
+            例： fetch('http://192.168.xx.xx:8080/check-task', {
+        **************************************************************
+        */
         fetch('http://localhost:8080/check-task', {
             method: 'POST',
             headers: {
@@ -275,17 +267,13 @@ export class MainGameScene extends Phaser.Scene {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // this.messageText.setText('タスクを完了しました: ' + data.message);
-                // this.showPopUpWindow('タスクを完了しました: ' + data.message);
                 this.clearTask();
             } else {
-                // this.messageText.setText('タスクの実行に失敗しました: ' + data.message);
                 this.showPopUpWindow('タスクの実行に失敗しました: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            // this.messageText.setText('エラーが発生しました');
             this.showPopUpWindow('エラーが発生しました');
         });
     }
@@ -295,8 +283,12 @@ export class MainGameScene extends Phaser.Scene {
         this.walkPlayer();
 
         if (this.currentTaskIndex >= this.tasks.length) {
-            this.messageText.setText('すべてのタスクを完了しました！');
+            this.showCmpleteMessage();
         }
+    }
+
+    showCmpleteMessage() {
+        this.messageText.setText('すべてのタスクを完了しました！お疲れ様でした！');
     }
 
     clearTask() {
@@ -321,7 +313,7 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     createReportButton() {
-        const buttonScale = 0.3;
+        const buttonScale = 0.4;
         const buttonWidth = this.textures.get('reportButton').getSourceImage().width * buttonScale;
         const buttonHeight = this.textures.get('reportButton').getSourceImage().height * buttonScale;
 
@@ -334,7 +326,6 @@ export class MainGameScene extends Phaser.Scene {
             .setInteractive()
             .setScale(buttonScale)
             .on('pointerdown', () => {
-                // this.scene.start('DiscussionScene'); // クリック時にDiscussionSceneへ移動
                 this.reportIssue();
             });
     }
