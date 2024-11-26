@@ -97,7 +97,7 @@ app.post('/check-task', (req, res) => {
     'check-back':'./shell-scripts/checkScripts/checkBack.sh', // task9
     'check-newbranch':'./shell-scripts/checkScripts/checkNewBranch.sh', // task10
     'check-merge':'./shell-scripts/checkScripts/checkMerge.sh', // task11
-    'check-release':'./shell-scripts/checkScripts/checkRelease.sh' // task12
+    'check-release':'./shell-scripts/checkScripts/checkTag.sh' // task12
   };
 
   const scriptPath = scriptMap[type];
