@@ -16,7 +16,7 @@
   - Kitamoto-LastProject/js/scenes/MainGameScene.jsの260行目あたり
   - Kitamoto-LastProject/js/scenes/RegisterScene.jsの19行目あたり
 3. VSCodeに拡張機能**Live Server**(publisherがRitwick Deyと書いてあるもの)をインストールする．
-4. Kitamoto-LastProject/index.htmlをVSCodeのエクスプローラ上で左クリックし，"Open with Live Server"をクリックする．
+4. Kitamoto-LastProject/index.htmlをVSCodeのエクスプローラ上で右クリックし，"Open with Live Server"をクリックする．
 5. 「開始」と書かれた画面がブラウザで表示されたら，**実験者の指示があるまで待機する**．
 
 
