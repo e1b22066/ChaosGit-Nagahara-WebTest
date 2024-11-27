@@ -1,5 +1,6 @@
 # ChaosGit
 
+Git初学者に向けた，リポジトリの障害と検知を通した学習支援システムである．
 サーバサイドプログラムである**server_app.js**と**server_term.js**をLinuxで実行し，Windowsで本Webアプリケーションを利用する．
 
 ## **テスト動作環境** ##
