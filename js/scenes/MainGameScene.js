@@ -182,15 +182,15 @@ export class MainGameScene extends Phaser.Scene {
         this.tasks = [
             { description: 'タスク1：\nあなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
             { description: 'タスク2：\nGitで作業を記録するために，指定の名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．\n名前：user\nメールアドレス：user@example.com', type: 'check-usr'},
-            { description: 'タスク3：\nMain.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．', type: 'check-initcommit'},
+            { description: 'タスク3：\nMain.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．\npushはまだしないでください．', type: 'check-initcommit'},
             { description: 'タスク4：\nGitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n', type: 'check-branch'},
-            { description: 'タスク5：\nリモートリポジトリを操作できるように，リモートのURLを設定してください．', type: 'check-url'},
+            { description: 'タスク5：\nリモートリポジトリを操作できるように，リモートのURLを設定してください．\nHTTPSではなくSSHを使って登録してください．', type: 'check-url'},
             { description: 'タスク6：\n作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．', type: 'check-push'},
             { description: 'タスク7：\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
-            { description: 'タスク8：\n"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
+            { description: 'タスク8：\n"Hello World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
             { description: 'タスク9：\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
-            { description: 'タスク10：\ngit logコマンドで今までのコミットが正しいか（意図通りか）確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
-            { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
+            { description: 'タスク10：\ngit logコマンドで今までのコミットが正しいか（意図通りか）確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nfeature-xyzブランチに移動して，"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
+            { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，Pull Requestを利用して-GitHub上でマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
             { description: 'タスク12：\nmainブランチに切り替え，プロジェクトのリリースに向けてv1.0タグを作成し\nタグをリモートへpushしてください．', type: 'check-release'},
         ];
         this.showCurrentTask();
