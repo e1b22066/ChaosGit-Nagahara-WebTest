@@ -189,7 +189,7 @@ export class MainGameScene extends Phaser.Scene {
             { description: 'タスク7：\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
             { description: 'タスク8：\n"Hello,World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
             { description: 'タスク9：\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
-            { description: 'タスク10：\ngit logコマンドで今までのコミットが正しいか確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
+            { description: 'タスク10：\ngit logコマンドで今までのコミットが正しいか（意図通りか）確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nそのブランチで"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
             { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，レビュー後にマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
             { description: 'タスク12：\nmainブランチに切り替え，プロジェクトのリリースに向けてv1.0タグを作成し\nタグをリモートへpushしてください．', type: 'check-release'},
         ];
