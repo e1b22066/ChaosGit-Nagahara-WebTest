@@ -7,7 +7,7 @@ export class DiscussionScene extends Phaser.Scene {
     preload() {
         this.load.image('dummy-button', '../../assets/images/dummy-button.png');
         this.load.image('terminalButton', '../../assets/images/terminal-button.png');
-        this.load.image('message', '../../assets/images/message.png');
+        this.load.image('message', '../../assets/images/message2.png');
         this.load.image('backButton', '../../assets/images/BackButton.png');
     }
 
@@ -22,7 +22,7 @@ export class DiscussionScene extends Phaser.Scene {
         this.createBackButotn();
 
         // メッセージを表示するテキスト
-        this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, '以下の作業をこのタイマーの残り時間を目安に行ってください．\
+        /* this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 290, '以下の作業をこのタイマーの残り時間を目安に行ってください．\
             \n ①レポートをした人が他のメンバーにどのような障害が発生したかを口頭で説明する．\
             \n ②レポートをした人がメンバーに対して，先程の説明が理解できたかどうかを確認する．\
             \n ※②でチームメンバーの理解が得られるまで説明を繰り返す．\
@@ -31,6 +31,12 @@ export class DiscussionScene extends Phaser.Scene {
             \n\
             \n補足：説明やそれを理解する上でターミナルを参照しても構いません．', {
             fontSize: '24px',
+            fill: '#000'
+        }).setOrigin(0.5, 0.5);
+        */
+
+        this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, '実験実施者の指示に従ってください', {
+            fontSize: '50px',
             fill: '#000'
         }).setOrigin(0.5, 0.5);
 
@@ -114,6 +120,6 @@ export class DiscussionScene extends Phaser.Scene {
     createMessageWindow() {
         this.messageWindow = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY + 300, 'message')
             .setInteractive()
-            .setScale(0.3)
+            .setScale(0.4)
     }
 }

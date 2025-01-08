@@ -20,7 +20,7 @@ export class MainGameScene extends Phaser.Scene {
         this.load.image('player', 'https://labs.phaser.io/assets/sprites/phaser-dude.png');
         this.load.image('terminalButton', '../../assets/images/terminal-button.png');
         this.load.image('closeButton', '../../assets/images/terminal-button.png');
-        this.load.image('reportButton', '../../assets/images/report-button.png');
+        this.load.image('reportButton', '../../assets/images/report2.png');
         this.load.image('close-term-button', '../../assets/images/close-term-button.png');
         this.load.image('close-button', '../../assets/images/close.png');
         this.load.image('task-window', '../../assets/images/alert.png');
@@ -180,18 +180,18 @@ export class MainGameScene extends Phaser.Scene {
 
     scenario() {
         this.tasks = [
-            { description: 'タスク1：\nあなたの作業環境に新しいプロジェクトのリポジトリを作成してください．\nこのリポジトリでは，Gitの操作を通じて開発を進めていきます．', type: 'check-init'},
+            { description: 'タスク1：\nターミナルにコマンドを入力して現在のディレクトリに新規のGitリポジトリを作成してください．\nここで作成したGitリポジトリをローカルリポジトリとして開発を進めます．', type: 'check-init'},
             { description: 'タスク2：\nGitで作業を記録するために，指定の名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．\n名前：user\nメールアドレス：user@example.com', type: 'check-usr'},
-            { description: 'タスク3：\nMain.javaというファイルを作成し，コミットを作成してください．\nMain.javaには何も書き込まなくても構いません．\npushはまだしないでください．', type: 'check-initcommit'},
+            { description: 'タスク3：\nMain.javaというファイルを作成し，コミットメッセージとともにコミットを作成してください．\nコミットにはコミットメッセージが必ず必要です．\nMain.javaには何も書き込まなくても構いません．\npushはまだしないでください．', type: 'check-initcommit'},
             { description: 'タスク4：\nGitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n', type: 'check-branch'},
-            { description: 'タスク5：\nリモートリポジトリを操作できるように，リモートのURLを設定してください．\nHTTPSではなくSSHを使って登録してください．', type: 'check-url'},
-            { description: 'タスク6：\n作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートへpushしてください．', type: 'check-push'},
-            { description: 'タスク7：\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートへpushしてください．', type: 'check-ignore'},
+            { description: 'タスク5：\nリモートリポジトリとローカルリポジトリが連携できるように，ローカルリポジトリに\nリモートリポジトリを登録してください．\nGitHub上でリモートリポジトリのURLを選択する際に\nHTTPSではなくSSH用のアドレスを選んで登録してください．', type: 'check-url'}, // 被験者混乱（リポジトリアクセス権の問題？）
+            { description: 'タスク6：\n作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートリポジトリへpushしてください．', type: 'check-push'},
+            { description: 'タスク7：\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートリポジトリへ\npushしてください．', type: 'check-ignore'},
             { description: 'タスク8：\n"Hello World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．', type: 'check-jcommit'},
             { description: 'タスク9：\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．', type: 'check-back'},
             { description: 'タスク10：\ngit logコマンドで今までのコミットが正しいか（意図通りか）確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nfeature-xyzブランチに移動して，"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．', type: 'check-newbranch'},
-            { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，Pull Requestを利用して-GitHub上でマージを行ってください．\nリモートでのマージはローカルに反映させてください．', type: 'check-merge'},
-            { description: 'タスク12：\nmainブランチに切り替え，プロジェクトのリリースに向けてv1.0タグを作成し\nタグをリモートへpushしてください．', type: 'check-release'},
+            { description: 'タスク11：\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，Pull Requestを利用して-GitHub上でマージを行ってください．\nリモートリポジトリでのマージはローカルに反映させてください．', type: 'check-merge'},
+            { description: 'タスク12：\nmainブランチに切り替え，プロジェクトのリリースに向けてv1.0タグを作成し\nタグをリモートリポジトリへpushしてください．', type: 'check-release'},
         ];
         this.showCurrentTask();
     }
