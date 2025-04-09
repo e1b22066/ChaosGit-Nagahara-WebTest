@@ -4,7 +4,9 @@
 REPO_PATH="../workspace/"
 
 # expected_url="https://github.com/Dagechan/WorkSpace.git"
-expected_url="git@github.com:Dagechan/WorkSpace.git"
+# expected_url="git@github.com:Dagechan/WorkSpace.git"
+expected_url="git@github.com:e1b22066/Workspace-test.git"
+
 actual_url=$(git -C "$REPO_PATH" remote get-url origin)
 
 # check if the directory exists

@@ -3,7 +3,8 @@
 # This is sagotage no.3
 
 # リモートリポジトリのURLと一時クローンディレクトリ
-REMOTE_REPO_PATH="git@github.com:Dagechan/WorkSpace.git"
+# REMOTE_REPO_PATH="git@github.com:Dagechan/WorkSpace.git"
+REMOTE_REPO_PATH="git@github.com:e1b22066/Workspace-test.git"
 TEMP_DIR="../workspace/temp_repo"
 
 # 1. リモートリポジトリを一時ディレクトリにクローン

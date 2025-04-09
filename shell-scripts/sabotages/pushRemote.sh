@@ -2,7 +2,8 @@
 
 # This is sagotage no.1
 
-REMOTE_REPO_PATH="git@github.com:Dagechan/WorkSpace.git"
+# REMOTE_REPO_PATH="git@github.com:Dagechan/WorkSpace.git"
+REMOTE_REPO_PATH="git@github.com:e1b22066/Workspace-test.git"
 TEMP_DIR="../workspace/temp_repo"
 
 # Clone the repository into a temporary directory

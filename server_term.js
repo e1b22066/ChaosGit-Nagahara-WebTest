@@ -17,7 +17,9 @@ const wss = new WebSocketServer({ port: 6060 });
 
 wss.on('connection', function connection(ws) {
 
-    const initialDirectory = '/home/dagechan/Projects/Bachelor/workspace';
+    //const initialDirectory = '/home/dagechan/Projects/Bachelor/workspace';
+    //ワークスペースの絶対パス
+    const initialDirectory = '/root/卒研/workspace';
 
     // ターミナルを起動
     const shell = pty.spawn('bash', [], {
