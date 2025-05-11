@@ -102,3 +102,5 @@ $ node server_term.js
 - ※なお，本画面に表示されているタイマーは参考程度に利用するだけで，現状画面強制移動などの効力はない．
 This is a sabotage commit. 
  このファイル「README.md」は消さずに問題を解決してください．
+This is a sabotage commit. 
+ このファイル「README.md」は消さずに問題を解決してください．
