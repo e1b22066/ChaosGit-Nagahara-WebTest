@@ -7,6 +7,8 @@ import path from 'path';
 import { exec } from 'child_process';
 import minimist from 'minimist';
 
+//ポート番号変更
+//
 const PORT = 8080;
 
 const args = minimist(process.argv.slice(2));
@@ -15,7 +17,6 @@ const args = minimist(process.argv.slice(2));
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: 'http://127.0.0.1:5501' }));
-
 
 // Create an HTTP server using the Express app
 const server = http.createServer(app);
