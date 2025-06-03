@@ -9,15 +9,14 @@
     <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-    <!--場合によって変更する-->
+    <!--場合によって変更する
     <iframe 
         src="https://meet.jitsi.si/ChaosGit-Test" 
         allow="camera; microphone; fullscreen"
         style="height: 700px; width: 100%; border: 0;">
     </iframe>
+-->
 
-
-    <h1>会議システム</h1>
     <!-- <button id="sabotageButton">sabotage</button> -->
     <!-- <button id="open-terminal">terminal</button> -->
     <div id="jitsi-container" style="height: 720px; width: 100%;"></div>
@@ -40,7 +39,9 @@
     <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <!--<script src="/socket.io/socket.io.js"></script>-->
     <script src="./js/term.js"></script>
     <script type="module" src="./js/game.js"></script>
     <script src="https://meet.jit.si/external_api.js"></script> <!--場合によって変更する-->
@@ -52,7 +53,7 @@
     //document.getElementById("muteBtn").addEventListener("click", () => {
     //jitsiWindow.postMessage({ action: "toggleAudio" }, "*");
     //});</script>
-
+    <!--
     <script>
         const domain = 'meet.jit.si';//場合によって変更する
         const options = {
@@ -66,6 +67,6 @@
         };
         const api = new JitsiMeetExternalAPI(domain, options);
     </script>
-
+-->
 </body>
 </html>

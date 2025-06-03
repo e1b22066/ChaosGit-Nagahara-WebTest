@@ -1,6 +1,6 @@
-export class MainGameScene extends Phaser.Scene {
+export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     constructor() {
-        super({ key: 'MainGameScene' });
+        super({ key: 'MainGameScene' });          //このSceneの名前
         this.tasks = [];
         this.currentTaskIndex = 0;
         this.gameState  = {
@@ -12,7 +12,7 @@ export class MainGameScene extends Phaser.Scene {
         this.socket = data.socket;
     }
 
-    preload() {
+    preload() {                                   //画像・音声の読み込み
         this.load.image('GitHub', '../../assets/images/GitHub-button.png');
         this.load.image('Task', '../../assets/images/task-button.png');
         this.load.image('Task2', '../../assets/images/co_taskButton.png');
@@ -32,6 +32,15 @@ export class MainGameScene extends Phaser.Scene {
 
     create() {
         this.createMessageWindow(); // メッセージウィンドウを作成
+         
+        /* 
+        **************************************************************
+            実験参加者の皆様へ
+        　　この下のアドレスを指定されたものに書き換えてください
+            例： this.socket = new WebSocket('ws:192.168.xx.xx:8080');
+        **************************************************************
+        */
+        this.ws = new WebSocket('ws://localhost:8081');
 
         // メッセージを表示するテキスト（初期は空の文字列）
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, '', {
@@ -48,6 +57,9 @@ export class MainGameScene extends Phaser.Scene {
         this.setupInput();         // 入力設定
         this.setupSocketListeners(); // ソケットリスナの設定
         this.scenario();
+        this.addChatUI();           //チャットUIをDOMで追加
+        this.initChatSocket();      //WebSocketの初期化
+        this.createopenjitsi();     //jitsi-meetボタン（例）
         
         this.socket.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
@@ -66,7 +78,6 @@ export class MainGameScene extends Phaser.Scene {
             }
 
         });
-
     }
 
     updateGameState(state) {
@@ -208,6 +219,124 @@ export class MainGameScene extends Phaser.Scene {
 
     showMessage(message) {
         this.messageText.setText(message);
+    }
+
+    addChatUI(){
+        // チャットUI用のDOM要素を追加（CSSは必要に応じて調整）
+        const chatHTML =` 
+        <div id="chatBox" style=" position: absolute; top: 10px; right: 10px;
+         z-index: 1000;  /* ← 追加: これでPhaserより前に出る */
+         width: 300px; background: rgba(0,0,0,0.5); color: white;
+         padding: 10px; font-size: 14px;">
+            <div id="chatMessages" style="height: 150px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #ccc; padding: 5px;"></div>
+            <div class="title">チャット</div>
+            <div calss="contents scroll" id="chat">
+            <div calss="contents input">
+                <div>
+                    <input class="name" type="text" id="nameInput" placeholder="name" />
+                </div>
+                <div>
+                    <input class="msg" type="text" id="msgInput" placeholder="message" />
+                </div>
+                 <button id="chatSendBtn"()">Send</button>
+            </div>
+            </div>
+        </div>
+        `;
+
+        const chatContainer = document.createElement('div');
+        chatContainer.innerHTML = chatHTML;
+        document.body.appendChild(chatContainer);
+
+        const chatSendBtn = document.getElementById("chatSendBtn");
+        if (chatSendBtn) {
+            chatSendBtn.addEventListener("click", this.sendMessage.bind(this));
+        } else {
+            console.warn("chatSendBtn が見つかりませんでした");
+        }
+    }
+
+    initChatSocket(){
+        //WebSocket接続
+        //let ws = new WebSocket('ws://localhost:8081');
+        let uuid = null;
+
+        //メッセージ受信処理
+        this.ws.onmessage = (event) => {
+            const json = JSON.parse(event.data);
+            console.log = (json);
+            if(json.uuid){
+                uuid = json.uuid;
+            }else{
+                const chatDiv = document.getElementById('chat');
+                chatDiv.appendChild(this.createMessage(json));
+                chatDiv.scrollTo(0, chatDiv.scrollHeight);
+            }
+        };
+    }
+
+    //メッセージ送信処理
+    sendMessage() {
+        //let ws = new WebSocket('ws://localhost:8081');
+        const now = new Date();
+        const json = {
+            name: document.getElementById('nameInput').value,
+            message: document.getElementById('msgInput').value,
+            time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
+        };
+        //メッセージ送信
+        this.ws.send(JSON.stringify(json));  
+        document.getElementById('msgInput').value = '';
+    }
+
+    // ここから下はDOM生成処理（メッセージ受信後のDOM生成）
+    createMessage(json) {
+        const side = json.mine ? 'mine' : 'other';
+        const sideElement = this.createDiv(side);
+        const sideTextElement = this.createDiv(`${side}-text`);
+        const timeElement = this.createDiv('time');
+        const nameElement = this.createDiv('name');
+        const textElement = this.createDiv('text');
+        timeElement.textContent = json.time;
+        nameElement.textContent = json.name;
+        textElement.textContent = json.message;
+        sideElement.appendChild(sideTextElement);
+        sideTextElement.appendChild(timeElement);
+        sideTextElement.appendChild(nameElement);
+        sideTextElement.appendChild(textElement);
+        return sideElement;
+    }
+
+    createDiv(className){
+        const element = document.createElement('div');
+        element.classList.add(className);
+        return element;
+    }
+
+    createopenjitsi(){
+        const meetHTML=`<button id="openJitsi" 
+                        style="position: fixed; 
+                        top: 10px; left: 10px; z-index: 1000;">
+                        Jitsiを開く     
+                        </button>`;     
+
+        const meetContainer = document.createElement('div');
+        meetContainer.innerHTML = meetHTML;
+        document.body.appendChild(meetContainer);
+
+        const openJitsi = document.getElementById("openJitsi");
+        if (openJitsi) {
+            openJitsi.addEventListener("click", this.openMeet.bind(this));
+        } else {
+            console.warn("openJitsi が見つかりませんでした");
+        }
+    }
+
+    openMeet(){
+        const jitsiWindow = window.open("https://meet.jit.si//chaosGit-Test", "_blank");
+        if (!jitsiWindow) {
+            alert("ポップアップブロックを解除してください！");
+        }
     }
 
     updateTask(task) {
@@ -365,7 +494,7 @@ export class MainGameScene extends Phaser.Scene {
                 this.gameState.playerPosition.x = this.player.x;
                 this.gameState.playerPosition.y = this.player.y;
 
-                console.log('Player Position:', this.gameState.playerPosition);
+                //console.log('Player Position:', this.gameState.playerPosition);
             }
         });
     }
@@ -410,6 +539,12 @@ export class MainGameScene extends Phaser.Scene {
     }
 
     handleButtonClick() {
-        window.open('https://github.com/Dagechan/WorkSpace');
+        window.open('https://github.com/e1b22066/Workspace-test');
     }
+
+    
 }
+
+
+
+

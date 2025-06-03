@@ -8,11 +8,11 @@
     "child_process": "^1.0.2",
     "cors": "^2.8.5",
     "debug": "^4.3.7",
-    "express": "^4.21.1",
+    "express": "^4.21.2",
     "minimist": "^1.2.8",
     "node-pty": "^1.0.0",
     "phaser": "^3.80.1",
-    "socket.io": "^4.7.5",
+    "socket.io": "^4.8.1",
     "ws": "^8.17.1",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0"
@@ -26,5 +26,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "Git初学者に向けた，リポジトリ障害（ユーザが意図しないリポジトリの状態を指す）の自動導入と，チーム活動を通してその検知・修復を行う学習支援システムである． サーバサイドプログラムである**server_app.js**と**server_term.js**をLinuxディストリビューション上で実行し，Windowsで本Webアプリケーションを利用する．"
 }
