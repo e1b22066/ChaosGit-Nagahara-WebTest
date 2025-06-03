@@ -1,27 +1,52 @@
 import http from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
+import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
 import minimist from 'minimist';
+import { Socket } from 'dgram';
 
+// __dirname の代替
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+//ポート番号変更
+//
 const PORT = 8080;
 
 const args = minimist(process.argv.slice(2));
+
+//global variable
+let iCountUser = 0;
 
 // Create an Express app
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: 'http://127.0.0.1:5501' }));
 
-
 // Create an HTTP server using the Express app
 const server = http.createServer(app);
+// Create an HTTP server 
+//const server2 = http.createServer();
 
 // Create a WebSocket server using the HTTP server
-const wss = new WebSocketServer({ server });
+const wss_system = new WebSocketServer({ server }); //8080
+const wss_chat = new WebSocketServer({ port:8081 });
+
+//const io = new SocketIOServer({ server });
+
+
+// Create a Socket.io server using the HTTP server
+//const io	= new SocketIOServer(server2, {
+//  cors: {
+//    origin: '*'
+//  }  
+//});
+
 
 let gameState = {
   currentTaskIndex: 0,
@@ -128,7 +153,8 @@ app.post('/check-task', (req, res) => {
   });
 });
 
-wss.on('connection', (ws) => {
+//Game WebSocket
+wss_system.on('connection', (ws) => {
   gameState.players.push(ws);
   console.log(`Player connected. Total players: ${gameState.players.length}`);
 
@@ -167,14 +193,42 @@ wss.on('connection', (ws) => {
   });
 });
 
+//Chat WebSocket
+wss_chat.on('connection', (ws) => {
+  //クライアント識別,wsが接続したクライアント
+  const uuid = crypto.randomUUID();
+  ws.send(JSON.stringify({uuid}));
+
+  //メッセージ受信処理
+  ws.on('message', (data) => {
+    const json = JSON.parse(data);
+    if(!json.message) return;
+    //Websocket 接続中のクライアント対象にメッセージ送信
+    wss_chat.clients.forEach((client) => {
+      //メッセージ送信先クライアントがメッセージ受信クライアントの判定を設定
+      json.mine = ws === client;
+      if(client.readyState === WebSocket.OPEN){
+        //メッセージ送信
+        client.send(JSON.stringify(json));
+      }
+    });
+  });
+});
+
 function broadcast(data) {
   gameState.players.forEach((player) => {
     player.send(JSON.stringify(data));
   });
 }
 
+
+
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`WebSocket server is also available at ws://localhost:${PORT}`);
 });
+
+//server2.listen(3030, () => {
+//  console.log('Socket.IO running on http://localhost:3030');
+//});
