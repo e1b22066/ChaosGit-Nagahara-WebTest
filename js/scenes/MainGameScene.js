@@ -42,6 +42,9 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         */
         this.ws = new WebSocket('ws://localhost:8081');
 
+        console.log("this.socket = ", this.socket);
+        console.log("this.ws = ", this.ws);
+
         // メッセージを表示するテキスト（初期は空の文字列）
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, '', {
             fontSize: '24px',
@@ -70,9 +73,17 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             }
 
             if (data.type == 'enterDiscussion') {
-                this.scene.start('DiscussionScene', { socket: this.socket });
+                this.scene.start('DiscussionScene', { 
+                    socket: this.socket ,
+                    ws: this.ws,
+                    addChatUI: this.addChatUI.bind(this),
+                    sendMessage:this.sendMessage.bind(this),
+                    initChatSocket: this.initChatSocket.bind(this),
+                    createDiv: this.createDiv.bind(this),
+                    createMessage: this.createMessage.bind(this)
+                });
             }
-            
+
             if (data.type == 'moveToNextTask') {
                 this.moveToNextTask();
             }
@@ -257,14 +268,12 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     }
 
     initChatSocket(){
-        //WebSocket接続
-        //let ws = new WebSocket('ws://localhost:8081');
         let uuid = null;
 
         //メッセージ受信処理
         this.ws.onmessage = (event) => {
             const json = JSON.parse(event.data);
-            console.log = (json);
+            console.log("json = " + json);
             if(json.uuid){
                 uuid = json.uuid;
             }else{
@@ -277,7 +286,6 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
     //メッセージ送信処理
     sendMessage() {
-        //let ws = new WebSocket('ws://localhost:8081');
         const now = new Date();
         const json = {
             name: document.getElementById('nameInput').value,
