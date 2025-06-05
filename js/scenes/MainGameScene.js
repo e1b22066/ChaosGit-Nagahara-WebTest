@@ -10,6 +10,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
     init(data) {
         this.socket = data.socket;
+        this.ws = data.ws;
     }
 
     preload() {                                   //画像・音声の読み込み
@@ -31,16 +32,10 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     }
 
     create() {
+        
+        this.resetHTMLList();//htmlをリセット
+
         this.createMessageWindow(); // メッセージウィンドウを作成
-         
-        /* 
-        **************************************************************
-            実験参加者の皆様へ
-        　　この下のアドレスを指定されたものに書き換えてください
-            例： this.socket = new WebSocket('ws:192.168.xx.xx:8080');
-        **************************************************************
-        */
-        this.ws = new WebSocket('ws://localhost:8081');
 
         console.log("this.socket = ", this.socket);
         console.log("this.ws = ", this.ws);
@@ -80,7 +75,8 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                     sendMessage:this.sendMessage.bind(this),
                     initChatSocket: this.initChatSocket.bind(this),
                     createDiv: this.createDiv.bind(this),
-                    createMessage: this.createMessage.bind(this)
+                    createMessage: this.createMessage.bind(this),
+                    resetHTMLList: this.resetHTMLList.bind(this)
                 });
             }
 
@@ -255,9 +251,8 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         </div>
         `;
 
-        const chatContainer = document.createElement('div');
-        chatContainer.innerHTML = chatHTML;
-        document.body.appendChild(chatContainer);
+        MainHTMLList.innerHTML = chatHTML;
+        document.body.appendChild(MainHTMLList);
 
         const chatSendBtn = document.getElementById("chatSendBtn");
         if (chatSendBtn) {
@@ -288,11 +283,13 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     sendMessage() {
         const now = new Date();
         const json = {
+            type: "chat",
             name: document.getElementById('nameInput').value,
             message: document.getElementById('msgInput').value,
             time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
         };
         //メッセージ送信
+        console.log("メッセージ送信");
         this.ws.send(JSON.stringify(json));  
         document.getElementById('msgInput').value = '';
     }
@@ -548,6 +545,13 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
     handleButtonClick() {
         window.open('https://github.com/e1b22066/Workspace-test');
+    }
+
+    // リセットする関数
+    resetHTMLList() {
+         // 初期HTMLを保存
+        const MainHTMLList = document.getElementById('MainHTMLList');
+        MainHTMLList.innerHTML = ``;
     }
 
     

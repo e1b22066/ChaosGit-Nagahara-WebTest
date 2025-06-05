@@ -18,6 +18,16 @@ export class RegisterScene extends Phaser.Scene {
         */
         this.socket = new WebSocket('ws://localhost:8080');
 
+        /* 
+        **************************************************************
+            実験参加者の皆様へ
+        　　この下のアドレスを指定されたものに書き換えてください
+            例： this.socket = new WebSocket('ws:192.168.xx.xx:8080');
+        **************************************************************
+        */
+
+        this.ws = new WebSocket('ws://localhost:8081');
+
         this.socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
 
@@ -30,7 +40,10 @@ export class RegisterScene extends Phaser.Scene {
             }
 
             if (data.type === 'startGame') {
-                this.scene.start('MainGameScene', { socket: this.socket });
+                this.scene.start('MainGameScene', { 
+                    socket: this.socket, 
+                    ws: this.ws 
+                });
             }
         };
     }

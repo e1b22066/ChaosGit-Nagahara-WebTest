@@ -2,7 +2,9 @@
 //
 //Among Usにのとって、
 //　　１．Sabotageが何かしたと気づいたときは、別のをチャットを立ち上げ(立ち上げ後の画面)　ここまで完成(6/5)
-//　　２．投票機能のように、それぞれがどのような対策をするかの案を出し、いいものに投票する
+//　　２．投票機能のように、それぞれがどのような対策をするかの案を出し、いいものに投票する  
+// 　　sendとvoteの使い分け投票のグッドを遅れるまでは行けたサーバ側の処理はまだなため、追記の必要あり、(6/6)
+//                                                                                  
 //　　３．多数決で決定し、一番投票の多かった案で、Sabotageの妨害を修正する。
 //　　４．誰が選ばれたなどは、あとあと振り返りで使う。
 export class DiscussionScene extends Phaser.Scene {
@@ -23,18 +25,18 @@ export class DiscussionScene extends Phaser.Scene {
     init(data) {
         //this.socket = data.socket;
         this.ws = data.ws;
-        //this.addChatUI = data.addChatUI; 
-        //なんか知らんけどやらんでも行けた　多分シーンじゃなくてhtmlにベタ打ちしてるから
-        //UIをちゃんとしたら多分必要
+        this.addChatUI = data.addChatUI; 
         this.sendMessage = data.sendMessage;
         this.initChatSocket = data.initChatSocket;
         this.createDiv = data.createDiv;
         this.createMessage = data.createMessage;
+        this.resetHTMLList = data.resetHTMLList;
     }
 
     create(data) {
         this.socket = data.socket;
 
+        this.resetHTMLList();
 
         console.log("this.socket = ", this.socket);
         console.log("this.ws = ", this.ws);
@@ -88,7 +90,9 @@ export class DiscussionScene extends Phaser.Scene {
         
         //チャット機能
         //this.addChatUI();           //チャットUIをDOMで追加
-        this.initChatSocket();      //WebSocketの初期化
+        //this.initChatSocket();      //WebSocketの初期化
+        this.initVoteSocket();
+        this.createVoteWindow();
     }
     
     startTimer() {
@@ -148,6 +152,133 @@ export class DiscussionScene extends Phaser.Scene {
             .setInteractive()
             .setScale(0.4)
     }
+
+    createVoteWindow(){
+        // チャットUI用のDOM要素を追加（CSSは必要に応じて調整）
+        const voteHTML =` 
+        <div id="chatBox" style=" position: absolute; top: 10px; right: 10px;
+         z-index: 1000;  /* ← 追加: これでPhaserより前に出る */
+         width: 300px; background: rgba(0,0,0,0.5); color: white;
+         padding: 10px; font-size: 14px;">
+            <div id="chatMessages" style="height: 150px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #ccc; padding: 5px;"></div>
+            <div class="title">投票</div>
+            <div calss="contents scroll" id="chat">
+            <div calss="contents input">
+                <div>
+                    <input class="name" type="text" id="nameInput" placeholder="name" />
+                </div>
+                <div>
+                    <input class="msg" type="text" id="msgInput" placeholder="message" />
+                </div>
+                 <button id="chatSendBtn"()">Send</button>
+                 <button id="voteSendBtn"()">Vote</button>
+            </div>
+            </div>
+        </div>
+        `;
+
+        MainHTMLList.innerHTML = voteHTML;
+        document.body.appendChild(MainHTMLList);
+
+        const chatSendBtn = document.getElementById("chatSendBtn");
+        if (chatSendBtn) {
+            chatSendBtn.addEventListener("click", this.sendMessage.bind(this));
+        } else {
+            console.warn("chatSendBtn が見つかりませんでした");
+        }
+
+        const voteSendBtn = document.getElementById("voteSendBtn");
+        if (voteSendBtn) {
+            voteSendBtn.addEventListener("click", this.voteMessage.bind(this));
+        } else {
+            console.warn("chatSendBtn が見つかりませんでした");
+        }
+    }
+
+    voteMessage() {
+        const now = new Date();
+        const json = {
+            type: "vote",
+            name: document.getElementById('nameInput').value,
+            message: document.getElementById('msgInput').value,
+            time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
+        };
+        //メッセージ送信
+        console.log("メッセージ送信");
+        this.ws.send(JSON.stringify(json));  
+        document.getElementById('msgInput').value = '';
+    }
+
+    initVoteSocket(){
+        let uuid = null;
+
+        //メッセージ受信処理
+        this.ws.onmessage = (event) => {
+            const json = JSON.parse(event.data);
+            console.log("json = " + json);
+            const chatDiv = document.getElementById('chat');
+
+            switch (json.type) {
+                case "chat":
+                    //const chatDiv = document.getElementById('chat');
+                    chatDiv.appendChild(this.createMessage(json));
+                    //chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                    break;
+
+                case "vote":
+                    //const voteDiv = document.getElementById('chat');
+                    chatDiv.appendChild(this.createVote(json));
+                    //chatDiv.scrollTo(0, voteDiv.scrollHeight);
+                    break;
+
+                case "uuid":
+                    uuid = join.uuid;
+                    break;
+            }
+            chatDiv.scrollTo(0, chatDiv.scrollHeight);
+        };
+    }
+
+    createVote(json) {
+        const side = json.mine ? 'mine' : 'other';
+        const sideElement = this.createDiv(side);
+        const sideTextElement = this.createDiv(`${side}-text`);
+        const timeElement = this.createDiv('time');
+        const nameElement = this.createDiv('name');
+        const textElement = this.createDiv('text');
+
+        timeElement.textContent = json.time;
+        nameElement.textContent = json.name;
+        textElement.textContent = json.message;
+
+        // 投票ボタンエリア
+        const voteContainer = this.createDiv('vote-container');
+        const voteButton = document.createElement('button');
+        voteButton.textContent = '👍';
+        voteButton.style.marginLeft = '10px';
+
+        const voteCount = document.createElement('span');
+        voteCount.textContent = '0';
+        voteCount.style.marginLeft = '5px';
+        
+        // クリック時に投票数+1
+        voteButton.addEventListener('click', () => {
+            voteCount.textContent = (parseInt(voteCount.textContent) + 1).toString();
+        });
+
+        voteContainer.appendChild(voteButton);
+        voteContainer.appendChild(voteCount);
+
+        sideElement.appendChild(sideTextElement);
+        sideTextElement.appendChild(timeElement);
+        sideTextElement.appendChild(nameElement);
+        sideTextElement.appendChild(textElement);
+        sideTextElement.appendChild(voteContainer); 
+
+        return sideElement;
+    }
+
+    
 }
 /*  元のやつ
 export class DiscussionScene extends Phaser.Scene {
