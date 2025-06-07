@@ -76,7 +76,8 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                     initChatSocket: this.initChatSocket.bind(this),
                     createDiv: this.createDiv.bind(this),
                     createMessage: this.createMessage.bind(this),
-                    resetHTMLList: this.resetHTMLList.bind(this)
+                    resetHTMLList: this.resetHTMLList.bind(this),
+                    generateId: this.generateId.bind(this)
                 });
             }
 
@@ -283,6 +284,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     sendMessage() {
         const now = new Date();
         const json = {
+            id: this.generateId(),
             type: "chat",
             name: document.getElementById('nameInput').value,
             message: document.getElementById('msgInput').value,
@@ -552,6 +554,10 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
          // 初期HTMLを保存
         const MainHTMLList = document.getElementById('MainHTMLList');
         MainHTMLList.innerHTML = ``;
+    }
+
+    generateId() {
+        return Math.random().toString(36).slice(2, 11);
     }
 
     
