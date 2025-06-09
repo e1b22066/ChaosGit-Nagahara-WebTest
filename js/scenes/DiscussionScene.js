@@ -8,8 +8,8 @@
 //     グットボタンを押した際に、サーバ間での通信完成、既存のメッセージに内容更新することが出来た(6/7)     
 //     
 //　　３．多数決で決定し、一番投票の多かった案で、Sabotageの妨害を修正する。
-//       次やること三票入った案に大きく表示これで対策して下さいと出力する。
-//       一人一票だけにしたい。また、投票の切り替えもできるようにしたい。
+//       次やること三票入った案に大きく表示これで対策して下さいと出力する。(6/9完成)
+//       一人一票だけにしたい。また、投票の切り替えもできるようにしたい。  (6/9完成)
 //
 //　　４．誰が選ばれたなどは、あとあと振り返りで使う。
 export class DiscussionScene extends Phaser.Scene {
@@ -17,7 +17,8 @@ export class DiscussionScene extends Phaser.Scene {
         super({ key: 'DiscussionScene' });
         this.timeLeft = 300; // タイマーの時間（秒）
         this.vote_flag = 0;  // 投票を一人一回までにするため
-        
+        this.voting_flag = 0; // 入れれる票数を一つにするため
+        this.voting_id = "null";
     }
 
     preload() {
@@ -53,6 +54,12 @@ export class DiscussionScene extends Phaser.Scene {
         this.createMessageWindow(); // メッセージウィンドウを作成
 
         this.createBackButotn();
+
+        //チャット機能
+        //this.addChatUI();           //チャットUIをDOMで追加
+        //this.initChatSocket();      //WebSocketの初期化
+        this.initVoteSocket();
+        this.createVoteWindow();
 
         // メッセージを表示するテキスト
         /* this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 290, '以下の作業をこのタイマーの残り時間を目安に行ってください．\
@@ -96,12 +103,6 @@ export class DiscussionScene extends Phaser.Scene {
         });
 
         this.createTerminalButton();
-        
-        //チャット機能
-        //this.addChatUI();           //チャットUIをDOMで追加
-        //this.initChatSocket();      //WebSocketの初期化
-        this.initVoteSocket();
-        this.createVoteWindow();
     }
     
     startTimer() {
@@ -222,7 +223,7 @@ export class DiscussionScene extends Phaser.Scene {
             document.getElementById('msgInput').value = '';
             this.vote_flag = 1;
         }else{
-            console.log("you had voted");
+            console.log("発表済み");
         }
     }
 
@@ -264,9 +265,77 @@ export class DiscussionScene extends Phaser.Scene {
                         // 見つからない場合は、新規描画する（任意）
                         chatDiv.appendChild(this.createVote(json));
                     }
+                    //三票入れられると、解決方法がでかでか表示
+                    if (json.voteCount === 3) {
+                        const name = targetElement.querySelector('.name')?.textContent || '(no name)';
+                        const message = targetElement.querySelector('.message')?.textContent || '(no message)';
+                        console.log("🌟 解決方法：");
+                        console.log("name =", name);
+                        console.log("message =", message);
+
+                        const solutionHTML = `
+                        <div id="voteSolution" style="
+                            display: none;
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            z-index: 9999;
+                            background: rgba(0, 0, 0, 0.85);
+                            color: white;
+                            padding: 30px 50px;
+                            font-size: 32px;
+                            border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                            text-align: center;
+                        ">
+                        </div>
+                        `;
+
+                        // 要素作成と追加
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = solutionHTML;
+                        document.body.appendChild(wrapper);
+
+                        const solutionDiv = document.getElementById('voteSolution');
+
+                        solutionDiv.innerHTML = `💡「${name}」のメッセージが<br>選ばれました！<br>"<${message}>"`;
+                        solutionDiv.style.display = 'block';
+
+                        //MainHTMLList.innerHTML = solutionHTML;
+                        //document.body.appendChild(MainHTMLList);
+                        //solutionDiv.appendChild(this.createSMsg(name, message));
+                        //solutionDiv.scrollTo(0, solutionDiv.scrollHeight);
+
+                        //banner.textContent = `💡 「${name}」のメッセージが選ばれました！\n"${message}"`;
+
+                        // 3秒後に非表示
+                        /*
+                        setTimeout(() => {
+                            wrapper.remove(); // or solutionDiv.style.display = 'none';
+                        }, 3000);
+                        */
+                    }
                     break;
             }
         };
+    }
+
+    createSMsg(name, message){
+        const side = 'mine';
+        const sideElement = this.createDiv(side);
+        const nameElement = this.createDiv('name');
+        const textElement = this.createDiv('text');
+        const sideTextElement = this.createDiv(`${side}-text`);
+
+        nameElement.textContent = name;
+        textElement.textContent = message;
+
+        sideElement.appendChild(sideTextElement);
+        sideTextElement.appendChild(nameElement);
+        sideTextElement.appendChild(textElement); 
+
+        return sideElement;
     }
 
     createVote(json) {
@@ -281,7 +350,9 @@ export class DiscussionScene extends Phaser.Scene {
         idElement.textContent = json.id;
         timeElement.textContent = json.time;
         nameElement.textContent = json.name;
+        nameElement.className = 'name';
         textElement.textContent = json.message;
+        textElement.className = 'message';
 
         // 投票ボタンエリア
         const voteContainer = this.createDiv('vote-container');
@@ -296,12 +367,25 @@ export class DiscussionScene extends Phaser.Scene {
         
         // クリック時に投票数+1
         voteButton.addEventListener('click', () => {
-            const voteMessage = {
-            type: "goodclick",
-            targetMessageId: json.id  // ← どのチャットに対する投票か
-            };
-        this.ws.send(JSON.stringify(voteMessage));
-            //voteCount.textContent = (parseInt(voteCount.textContent) + 1).toString();
+            if(!this.voting_flag){   //まだ投票してない
+                    const voteMessage = {
+                    type: "goodclickOn",
+                    targetMessageId: json.id,  // ← どのチャットに対する投票か
+                    };
+                this.ws.send(JSON.stringify(voteMessage));
+                this.voting_flag = 1;
+                this.voting_id = json.id;
+            }else if(this.voting_id === json.id){    //投票したのを取り消す場合
+                 const voteMessage = {
+                    type: "goodclickOff",
+                    targetMessageId: json.id,  // ← どのチャットに対する投票を取り消すか
+                    };
+                this.ws.send(JSON.stringify(voteMessage));
+                this.voting_flag = 0;
+                this.voting_id = "null";
+            }else{   //複数投票する場合
+                console.log("投票済み");
+            }
         });
 
         voteContainer.appendChild(voteButton);
@@ -320,5 +404,7 @@ export class DiscussionScene extends Phaser.Scene {
 
     resetCount(){
         this.vote_flag = 0;
+        this.voting_flag = 0;
+        this.voting_id = "null";
     }
 }

@@ -222,25 +222,29 @@ wss_chat.on('connection', (ws) => {
         });
         break;
       
-       case "goodclick"://投票の際に、いいね！ボタンを押した場合
+       case "goodclickOn"://投票の際に、いいね！ボタンを押した場合
+       case "goodclickOff":
          const target = globalMessages.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
+        
+          if(json.type === "goodclickOn"){
+            target.voteCount++;
+          }
+          if(json.type === "goodclickOff"){
+            target.voteCount--;
+          }
 
-         if(target){
-           target.voteCount++;
-         }
+          const CountUpdate = {
+            type: "goodclick",
+            targetMessageId: target.id,
+            voteCount: target.voteCount,
+          };
 
-         const CountUpdate = {
-           type: "goodclick",
-           targetMessageId: target.id,
-           voteCount: target.voteCount
-         };
-
-         wss_chat.clients.forEach((client) => {
-           if(client.readyState === WebSocket.OPEN){
-             //メッセージ送信
-             client.send(JSON.stringify(CountUpdate));
-           }
-         });
+          wss_chat.clients.forEach((client) => {
+            if(client.readyState === WebSocket.OPEN){
+              //メッセージ送信
+              client.send(JSON.stringify(CountUpdate));
+            }
+          });
          break;
      }
     });
