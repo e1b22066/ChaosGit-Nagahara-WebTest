@@ -14,7 +14,7 @@ let uuid = null;
 //メッセージ受信処理
 ws.onmessage = (event) => {
 	const json = JSON.parse(event.data);
-	console.log = (json);
+	//console.log = (json);
 	if(json.uuid){
 		uuid = json.uuid;
 	}else{

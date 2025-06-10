@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
 import minimist from 'minimist';
 import { Socket } from 'dgram';
+import { count } from 'console';
 
 // __dirname の代替
 const __filename = fileURLToPath(import.meta.url);
@@ -22,6 +23,8 @@ const args = minimist(process.argv.slice(2));
 
 //global variable
 let iCountUser = 0;
+
+const globalMessages = []; // サーバーに届いたすべてのメッセージを保持
 
 // Create an Express app
 const app = express();
@@ -202,17 +205,49 @@ wss_chat.on('connection', (ws) => {
   //メッセージ受信処理
   ws.on('message', (data) => {
     const json = JSON.parse(data);
-    if(!json.message) return;
-    //Websocket 接続中のクライアント対象にメッセージ送信
-    wss_chat.clients.forEach((client) => {
-      //メッセージ送信先クライアントがメッセージ受信クライアントの判定を設定
-      json.mine = ws === client;
-      if(client.readyState === WebSocket.OPEN){
-        //メッセージ送信
-        client.send(JSON.stringify(json));
-      }
+
+    switch(json.type){
+      case "chat":
+      case "vote":
+        if(!json.message) return;
+        //Websocket 接続中のクライアント対象にメッセージ送信
+        wss_chat.clients.forEach((client) => {
+          //メッセージ送信先クライアントがメッセージ受信クライアントの判定を設定
+          json.mine = ws === client;
+          if(client.readyState === WebSocket.OPEN){
+            //メッセージ送信
+            client.send(JSON.stringify(json));
+            globalMessages.push(json); // ← ここで保存
+          }
+        });
+        break;
+      
+       case "goodclickOn"://投票の際に、いいね！ボタンを押した場合
+       case "goodclickOff":
+         const target = globalMessages.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
+        
+          if(json.type === "goodclickOn"){
+            target.voteCount++;
+          }
+          if(json.type === "goodclickOff"){
+            target.voteCount--;
+          }
+
+          const CountUpdate = {
+            type: "goodclick",
+            targetMessageId: target.id,
+            voteCount: target.voteCount,
+          };
+
+          wss_chat.clients.forEach((client) => {
+            if(client.readyState === WebSocket.OPEN){
+              //メッセージ送信
+              client.send(JSON.stringify(CountUpdate));
+            }
+          });
+         break;
+     }
     });
-  });
 });
 
 function broadcast(data) {
@@ -221,14 +256,9 @@ function broadcast(data) {
   });
 }
 
-
-
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`WebSocket server is also available at ws://localhost:${PORT}`);
 });
 
-//server2.listen(3030, () => {
-//  console.log('Socket.IO running on http://localhost:3030');
-//});

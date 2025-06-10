@@ -10,6 +10,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
     init(data) {
         this.socket = data.socket;
+        this.ws = data.ws;
     }
 
     preload() {                                   //画像・音声の読み込み
@@ -31,16 +32,13 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     }
 
     create() {
+        
+        this.resetHTMLList();//htmlをリセット
+
         this.createMessageWindow(); // メッセージウィンドウを作成
-         
-        /* 
-        **************************************************************
-            実験参加者の皆様へ
-        　　この下のアドレスを指定されたものに書き換えてください
-            例： this.socket = new WebSocket('ws:192.168.xx.xx:8080');
-        **************************************************************
-        */
-        this.ws = new WebSocket('ws://localhost:8081');
+
+        console.log("this.socket = ", this.socket);
+        console.log("this.ws = ", this.ws);
 
         // メッセージを表示するテキスト（初期は空の文字列）
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, '', {
@@ -70,9 +68,19 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             }
 
             if (data.type == 'enterDiscussion') {
-                this.scene.start('DiscussionScene', { socket: this.socket });
+                this.scene.start('DiscussionScene', { 
+                    socket: this.socket ,
+                    ws: this.ws,
+                    addChatUI: this.addChatUI.bind(this),
+                    sendMessage:this.sendMessage.bind(this),
+                    initChatSocket: this.initChatSocket.bind(this),
+                    createDiv: this.createDiv.bind(this),
+                    createMessage: this.createMessage.bind(this),
+                    resetHTMLList: this.resetHTMLList.bind(this),
+                    generateId: this.generateId.bind(this)
+                });
             }
-            
+
             if (data.type == 'moveToNextTask') {
                 this.moveToNextTask();
             }
@@ -244,9 +252,8 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         </div>
         `;
 
-        const chatContainer = document.createElement('div');
-        chatContainer.innerHTML = chatHTML;
-        document.body.appendChild(chatContainer);
+        MainHTMLList.innerHTML = chatHTML;
+        document.body.appendChild(MainHTMLList);
 
         const chatSendBtn = document.getElementById("chatSendBtn");
         if (chatSendBtn) {
@@ -257,14 +264,12 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     }
 
     initChatSocket(){
-        //WebSocket接続
-        //let ws = new WebSocket('ws://localhost:8081');
         let uuid = null;
 
         //メッセージ受信処理
         this.ws.onmessage = (event) => {
             const json = JSON.parse(event.data);
-            console.log = (json);
+            console.log("json = " + json);
             if(json.uuid){
                 uuid = json.uuid;
             }else{
@@ -277,14 +282,16 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
     //メッセージ送信処理
     sendMessage() {
-        //let ws = new WebSocket('ws://localhost:8081');
         const now = new Date();
         const json = {
+            id: this.generateId(),
+            type: "chat",
             name: document.getElementById('nameInput').value,
             message: document.getElementById('msgInput').value,
             time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
         };
         //メッセージ送信
+        console.log("メッセージ送信");
         this.ws.send(JSON.stringify(json));  
         document.getElementById('msgInput').value = '';
     }
@@ -540,6 +547,17 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
     handleButtonClick() {
         window.open('https://github.com/e1b22066/Workspace-test');
+    }
+
+    // リセットする関数
+    resetHTMLList() {
+         // 初期HTMLを保存
+        const MainHTMLList = document.getElementById('MainHTMLList');
+        MainHTMLList.innerHTML = ``;
+    }
+
+    generateId() {
+        return Math.random().toString(36).slice(2, 11);
     }
 
     

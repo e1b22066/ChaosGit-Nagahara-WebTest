@@ -1,7 +1,24 @@
+//Among USのような、投票機能をもったディスカッション機能を作る
+//
+//Among Usにのとって、
+//　　１．Sabotageが何かしたと気づいたときは、別のをチャットを立ち上げ(立ち上げ後の画面)　ここまで完成(6/4)
+//　　２．投票機能のように、それぞれがどのような対策をするかの案を出し、いいものに投票する  
+// 　　sendとvoteの使い分け投票のグッドを遅れるまでは行けたサーバ側の処理はまだなため、追記の必要あり、(6/5)
+//       
+//     グットボタンを押した際に、サーバ間での通信完成、既存のメッセージに内容更新することが出来た(6/7)     
+//     
+//　　３．多数決で決定し、一番投票の多かった案で、Sabotageの妨害を修正する。
+//       次やること三票入った案に大きく表示これで対策して下さいと出力する。(6/9完成)
+//       一人一票だけにしたい。また、投票の切り替えもできるようにしたい。  (6/9完成)
+//
+//　　４．誰が選ばれたなどは、あとあと振り返りで使う。
 export class DiscussionScene extends Phaser.Scene {
     constructor() {
         super({ key: 'DiscussionScene' });
         this.timeLeft = 300; // タイマーの時間（秒）
+        this.vote_flag = 0;  // 投票を一人一回までにするため
+        this.voting_flag = 0; // 入れれる票数を一つにするため
+        this.voting_id = "null";
     }
 
     preload() {
@@ -11,15 +28,38 @@ export class DiscussionScene extends Phaser.Scene {
         this.load.image('backButton', '../../assets/images/BackButton.png');
     }
 
+    //wsは、chatようの通信ソケット
+    //addChat以下は、チャット機能
     init(data) {
+        //this.socket = data.socket;
+        this.ws = data.ws;
+        this.addChatUI = data.addChatUI; 
+        this.sendMessage = data.sendMessage;
+        //this.initChatSocket = data.initChatSocket;
+        this.createDiv = data.createDiv;
+        this.createMessage = data.createMessage;
+        this.resetHTMLList = data.resetHTMLList;
+        this.generateId = data.generateId;
     }
 
     create(data) {
         this.socket = data.socket;
 
+        this.resetHTMLList();
+        this.resetCount();
+
+        console.log("this.socket = ", this.socket);
+        console.log("this.ws = ", this.ws);
+
         this.createMessageWindow(); // メッセージウィンドウを作成
 
         this.createBackButotn();
+
+        //チャット機能
+        //this.addChatUI();           //チャットUIをDOMで追加
+        //this.initChatSocket();      //WebSocketの初期化
+        this.initVoteSocket();
+        this.createVoteWindow();
 
         // メッセージを表示するテキスト
         /* this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 290, '以下の作業をこのタイマーの残り時間を目安に行ってください．\
@@ -121,5 +161,250 @@ export class DiscussionScene extends Phaser.Scene {
         this.messageWindow = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY + 300, 'message')
             .setInteractive()
             .setScale(0.4)
+    }
+
+    createVoteWindow(){
+        // チャットUI用のDOM要素を追加（CSSは必要に応じて調整）
+        const voteHTML =` 
+        <div id="chatBox" style=" position: absolute; top: 10px; right: 10px;
+         z-index: 1000;  /* ← 追加: これでPhaserより前に出る */
+         width: 300px; background: rgba(0,0,0,0.5); color: white;
+         padding: 10px; font-size: 14px;">
+            <div id="chatMessages" style="height: 150px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #ccc; padding: 5px;"></div>
+            <div class="title">投票</div>
+            <div calss="contents scroll" id="chat">
+            <div calss="contents input">
+                <div>
+                    <input class="name" type="text" id="nameInput" placeholder="name" />
+                </div>
+                <div>
+                    <input class="msg" type="text" id="msgInput" placeholder="message" />
+                </div>
+                 <button id="chatSendBtn"()">Send</button>
+                 <button id="voteSendBtn"()">Vote</button>
+            </div>
+            </div>
+        </div>
+        `;
+
+        MainHTMLList.innerHTML = voteHTML;
+        document.body.appendChild(MainHTMLList);
+
+        const chatSendBtn = document.getElementById("chatSendBtn");
+        if (chatSendBtn) {
+            chatSendBtn.addEventListener("click", this.sendMessage.bind(this));
+        } else {
+            console.warn("chatSendBtn が見つかりませんでした");
+        }
+
+        const voteSendBtn = document.getElementById("voteSendBtn");
+        if (voteSendBtn) {
+            voteSendBtn.addEventListener("click", this.voteMessage.bind(this));
+        } else {
+            console.warn("chatSendBtn が見つかりませんでした");
+        }
+    }
+
+    voteMessage() {
+        const now = new Date();
+        const json = {
+            id: this.generateId(),
+            type: "vote",
+            name: document.getElementById('nameInput').value,
+            message: document.getElementById('msgInput').value,
+            time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`,
+            voteCount: 0
+        };
+
+        //メッセージ送信
+        if(!this.vote_flag){
+            console.log("メッセージ送信");
+            this.ws.send(JSON.stringify(json));  
+            document.getElementById('msgInput').value = '';
+            this.vote_flag = 1;
+        }else{
+            console.log("発表済み");
+        }
+    }
+
+    initVoteSocket(){
+        let uuid = null;
+        //メッセージ受信処理
+        this.ws.onmessage = (event) => {
+            const json = JSON.parse(event.data);
+            console.log("json = " + json);
+            const chatDiv = document.getElementById('chat');
+
+            switch (json.type) {
+                case "chat":
+                    //const chatDiv = document.getElementById('chat');
+                    chatDiv.appendChild(this.createMessage(json));
+                    chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                    break;
+
+                case "vote":
+                    //const voteDiv = document.getElementById('chat');
+                    chatDiv.appendChild(this.createVote(json));
+                    chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                    break;
+
+                case "uuid":
+                    uuid = join.uuid;
+                    break;
+                
+                case "goodclick":
+                    // 既存のメッセージ要素を探す
+                    const targetElement = document.querySelector(`[data-id="${json.targetMessageId}"]`);
+                    if (targetElement) {
+                        // voteCountを表示している span を見つける（classなどで特定すると安全）
+                        const voteCountSpan = targetElement.querySelector('.vote-count');
+                        if (voteCountSpan) {
+                            voteCountSpan.textContent = json.voteCount.toString();
+                        }
+                    } else {
+                        // 見つからない場合は、新規描画する（任意）
+                        chatDiv.appendChild(this.createVote(json));
+                    }
+                    //三票入れられると、解決方法がでかでか表示
+                    if (json.voteCount === 3) {
+                        const name = targetElement.querySelector('.name')?.textContent || '(no name)';
+                        const message = targetElement.querySelector('.message')?.textContent || '(no message)';
+                        console.log("🌟 解決方法：");
+                        console.log("name =", name);
+                        console.log("message =", message);
+
+                        const solutionHTML = `
+                        <div id="voteSolution" style="
+                            display: none;
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            z-index: 9999;
+                            background: rgba(0, 0, 0, 0.85);
+                            color: white;
+                            padding: 30px 50px;
+                            font-size: 32px;
+                            border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                            text-align: center;
+                        ">
+                        </div>
+                        `;
+
+                        // 要素作成と追加
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = solutionHTML;
+                        document.body.appendChild(wrapper);
+
+                        const solutionDiv = document.getElementById('voteSolution');
+
+                        solutionDiv.innerHTML = `💡「${name}」のメッセージが<br>選ばれました！<br>"<${message}>"`;
+                        solutionDiv.style.display = 'block';
+
+                        //MainHTMLList.innerHTML = solutionHTML;
+                        //document.body.appendChild(MainHTMLList);
+                        //solutionDiv.appendChild(this.createSMsg(name, message));
+                        //solutionDiv.scrollTo(0, solutionDiv.scrollHeight);
+
+                        //banner.textContent = `💡 「${name}」のメッセージが選ばれました！\n"${message}"`;
+
+                        // 3秒後に非表示
+                        /*
+                        setTimeout(() => {
+                            wrapper.remove(); // or solutionDiv.style.display = 'none';
+                        }, 3000);
+                        */
+                    }
+                    break;
+            }
+        };
+    }
+
+    createSMsg(name, message){
+        const side = 'mine';
+        const sideElement = this.createDiv(side);
+        const nameElement = this.createDiv('name');
+        const textElement = this.createDiv('text');
+        const sideTextElement = this.createDiv(`${side}-text`);
+
+        nameElement.textContent = name;
+        textElement.textContent = message;
+
+        sideElement.appendChild(sideTextElement);
+        sideTextElement.appendChild(nameElement);
+        sideTextElement.appendChild(textElement); 
+
+        return sideElement;
+    }
+
+    createVote(json) {
+        const side = json.mine ? 'mine' : 'other';
+        const sideElement = this.createDiv(side);
+        const sideTextElement = this.createDiv(`${side}-text`);
+        const idElement = this.createDiv('id');
+        const timeElement = this.createDiv('time');
+        const nameElement = this.createDiv('name');
+        const textElement = this.createDiv('text');
+
+        idElement.textContent = json.id;
+        timeElement.textContent = json.time;
+        nameElement.textContent = json.name;
+        nameElement.className = 'name';
+        textElement.textContent = json.message;
+        textElement.className = 'message';
+
+        // 投票ボタンエリア
+        const voteContainer = this.createDiv('vote-container');
+        const voteButton = document.createElement('button');
+        voteButton.textContent = '👍';
+        voteButton.style.marginLeft = '10px';
+
+        const voteCount = document.createElement('span');
+        voteCount.textContent = '0';
+        voteCount.className = 'vote-count';
+        voteCount.style.marginLeft = '5px';
+        
+        // クリック時に投票数+1
+        voteButton.addEventListener('click', () => {
+            if(!this.voting_flag){   //まだ投票してない
+                    const voteMessage = {
+                    type: "goodclickOn",
+                    targetMessageId: json.id,  // ← どのチャットに対する投票か
+                    };
+                this.ws.send(JSON.stringify(voteMessage));
+                this.voting_flag = 1;
+                this.voting_id = json.id;
+            }else if(this.voting_id === json.id){    //投票したのを取り消す場合
+                 const voteMessage = {
+                    type: "goodclickOff",
+                    targetMessageId: json.id,  // ← どのチャットに対する投票を取り消すか
+                    };
+                this.ws.send(JSON.stringify(voteMessage));
+                this.voting_flag = 0;
+                this.voting_id = "null";
+            }else{   //複数投票する場合
+                console.log("投票済み");
+            }
+        });
+
+        voteContainer.appendChild(voteButton);
+        voteContainer.appendChild(voteCount);
+
+        sideElement.setAttribute('data-id', json.id);
+        sideElement.appendChild(sideTextElement);
+        sideTextElement.appendChild(idElement);
+        sideTextElement.appendChild(timeElement);
+        sideTextElement.appendChild(nameElement);
+        sideTextElement.appendChild(textElement);
+        sideTextElement.appendChild(voteContainer); 
+
+        return sideElement;
+    }
+
+    resetCount(){
+        this.vote_flag = 0;
+        this.voting_flag = 0;
+        this.voting_id = "null";
     }
 }
