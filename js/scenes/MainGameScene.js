@@ -6,6 +6,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.gameState  = {
             playerPosition: { x: null, y: null }
         };
+        this.clickReport_count = 0;
     }
 
     init(data) {
@@ -59,6 +60,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.initChatSocket();      //WebSocketの初期化
         this.createopenjitsi();     //jitsi-meetボタン（例）
         
+        //ゲーム操作側のサーバの受信処理
         this.socket.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
 
@@ -66,7 +68,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                 this.updateGameState(data.state);
                 this.moveToNextTask();
             }
-
+            /*
             if (data.type == 'enterDiscussion') {
                 this.scene.start('DiscussionScene', { 
                     socket: this.socket ,
@@ -80,9 +82,14 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                     generateId: this.generateId.bind(this)
                 });
             }
+            */
 
             if (data.type == 'moveToNextTask') {
                 this.moveToNextTask();
+            }
+
+            if(data.type == 'clickReport'){
+                this.someoneClickReport();
             }
 
         });
@@ -423,6 +430,55 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         }
     }
 
+    someoneClickReport(){
+        const clickReportHTML = `
+                        <div id="someoneClickReport" style="
+                            display: none;
+                            position: fixed;
+                            top: 20%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            z-index: 9999;
+                            background: rgba(0, 0, 0, 0.85);
+                            color: white;
+                            padding: 30px 50px;
+                            font-size: 16px;
+                            border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                            text-align: center;
+                        ">
+                        </div>
+                        `;
+
+                        // 要素作成と追加
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = clickReportHTML;
+                        document.body.appendChild(wrapper);
+
+                        const clickReportDiv = document.getElementById('someoneClickReport');
+
+                        this.clickReport_count++;
+
+                        clickReportDiv.innerHTML = `💡「${this.clickReport_count}人がSabotageの邪魔を見つけました」<br>
+                                                        投票開始まで後${3-this.clickReport_count}人`;
+                        clickReportDiv.style.display = 'block';
+
+                        if(this.clickReport_count === 3){
+                            clickReportDiv.style.display = 'none';
+                            this.scene.start('DiscussionScene', { 
+                            socket: this.socket ,
+                            ws: this.ws,
+                            addChatUI: this.addChatUI.bind(this),
+                            sendMessage:this.sendMessage.bind(this),
+                            initChatSocket: this.initChatSocket.bind(this),
+                            createDiv: this.createDiv.bind(this),
+                            createMessage: this.createMessage.bind(this),
+                            resetHTMLList: this.resetHTMLList.bind(this),
+                            generateId: this.generateId.bind(this)
+                            });
+                        }
+    }
+
     showCmpleteMessage() {
         this.messageText.setText('すべてのタスクを完了しました！お疲れ様でした！');
     }
@@ -554,6 +610,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
          // 初期HTMLを保存
         const MainHTMLList = document.getElementById('MainHTMLList');
         MainHTMLList.innerHTML = ``;
+        this.clickReport_count = 0;
     }
 
     generateId() {

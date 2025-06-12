@@ -181,7 +181,8 @@ wss_system.on('connection', (ws) => {
 
       // Trigger discussion phase
       if (data.type === 'reportIssue') {
-        broadcast({ type: 'enterDiscussion' });
+        broadcast({ type: 'clickReport' });
+        //broadcast({ type: 'enterDiscussion' });
       }
 
     } catch (error) {
