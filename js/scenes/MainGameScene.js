@@ -12,6 +12,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     init(data) {
         this.socket = data.socket;
         this.ws = data.ws;
+        this.name = data.name;
     }
 
     preload() {                                   //画像・音声の読み込み
@@ -33,13 +34,14 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     }
 
     create() {
-        
         this.resetHTMLList();//htmlをリセット
 
         this.createMessageWindow(); // メッセージウィンドウを作成
 
         console.log("this.socket = ", this.socket);
         console.log("this.ws = ", this.ws);
+        console.log("this.name = ", this.name);
+
 
         // メッセージを表示するテキスト（初期は空の文字列）
         this.messageText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 300, '', {
@@ -239,17 +241,13 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     addChatUI(){
         // チャットUI用のDOM要素を追加（CSSは必要に応じて調整）
         const chatHTML =` 
-        <div id="chatBox" style=" position: absolute; top: 10px; right: 10px;
+        <div id="chatBox" style=" position: absolute; top: 100px; right: 10px;
          z-index: 1000;  /* ← 追加: これでPhaserより前に出る */
          width: 300px; background: rgba(0,0,0,0.5); color: white;
          padding: 10px; font-size: 14px;">
-            <div id="chatMessages" style="height: 150px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #ccc; padding: 5px;"></div>
             <div class="title">チャット</div>
             <div calss="contents scroll" id="chat">
             <div calss="contents input">
-                <div>
-                    <input class="name" type="text" id="nameInput" placeholder="name" />
-                </div>
                 <div>
                     <input class="msg" type="text" id="msgInput" placeholder="message" />
                 </div>
@@ -293,7 +291,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         const json = {
             id: this.generateId(),
             type: "chat",
-            name: document.getElementById('nameInput').value,
+            name: this.name,
             message: document.getElementById('msgInput').value,
             time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
         };
@@ -466,8 +464,9 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                         if(this.clickReport_count === 3){
                             clickReportDiv.style.display = 'none';
                             this.scene.start('DiscussionScene', { 
-                            socket: this.socket ,
+                            socket: this.socket,
                             ws: this.ws,
+                            name: this.name,
                             addChatUI: this.addChatUI.bind(this),
                             sendMessage:this.sendMessage.bind(this),
                             initChatSocket: this.initChatSocket.bind(this),

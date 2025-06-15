@@ -26,6 +26,8 @@ let iCountUser = 0;
 
 const globalMessages = []; // サーバーに届いたすべてのメッセージを保持
 
+const playerName = [];
+
 // Create an Express app
 const app = express();
 app.use(express.json());
@@ -206,8 +208,13 @@ wss_chat.on('connection', (ws) => {
   //メッセージ受信処理
   ws.on('message', (data) => {
     const json = JSON.parse(data);
-
     switch(json.type){
+
+      case "name":
+        playerName.push(json.name);
+        console.log("name is " + json.name);
+        break;
+
       case "chat":
       case "vote":
         if(!json.message) return;
@@ -226,7 +233,10 @@ wss_chat.on('connection', (ws) => {
        case "goodclickOn"://投票の際に、いいね！ボタンを押した場合
        case "goodclickOff":
          const target = globalMessages.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
-        
+         let taskName = "null";
+         let randomIndex = 0;
+         let decide_flag = 0;
+         
           if(json.type === "goodclickOn"){
             target.voteCount++;
           }
@@ -234,10 +244,22 @@ wss_chat.on('connection', (ws) => {
             target.voteCount--;
           }
 
+          if(target.voteCount === 3){
+            while(decide_flag === 0){
+              randomIndex = Math.floor(Math.random() * playerName.length);
+              if(target.name !== playerName[randomIndex]){
+                taskName = playerName[randomIndex];
+                decide_flag = 1;
+              }
+            }
+              console.log(`選ばれたPlayer: ${taskName}`);
+          }
+
           const CountUpdate = {
             type: "goodclick",
             targetMessageId: target.id,
             voteCount: target.voteCount,
+            taskName: taskName
           };
 
           wss_chat.clients.forEach((client) => {

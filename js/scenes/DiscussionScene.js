@@ -6,7 +6,10 @@
 //　　　　（初めて、Reportボタンを押すと、Main画面上に「誰かがSabotageの邪魔を見つけました」的な奴を表示し、全員
 //　　　　が調べる機会を設ける）
 //　　※ついでに、画面が切り替わるごとに、表示されているHTMLの正常な切り替えも実装した。
-//　　２．投票機能終了後の、誰が決めるかなどはまだ未定・未実装であるためそのあたりを詰める。
+//　　２．投票機能終了後の、誰が決めるかなどはまだ未定・未実装であるためそのあたりを詰める。(6/15完成)
+//       修正した内容をランダムで、決める機能を実装。
+// 　　　名前は、開始時に入力するようにし、サーバ側にも名前を保存できるようにした。
+//       修正案を提示した人は、実際の修正係にならないようにしている。
 //　　３．どこか詰まるあたりがあるのか調べる。
 //　　４．多数決や時間制限など様々場合を検証できるように複数パターン用意しておく。
 //　・投票機能において、どのように振り返り要素に持っていくのか考える。
@@ -33,6 +36,7 @@ export class DiscussionScene extends Phaser.Scene {
     init(data) {
         //this.socket = data.socket;
         this.ws = data.ws;
+        this.name = data.name;
         this.addChatUI = data.addChatUI; 
         this.sendMessage = data.sendMessage;
         //this.initChatSocket = data.initChatSocket;
@@ -171,17 +175,13 @@ export class DiscussionScene extends Phaser.Scene {
     createVoteWindow(){
         // チャットUI用のDOM要素を追加（CSSは必要に応じて調整）
         const voteHTML =` 
-        <div id="chatBox" style=" position: absolute; top: 10px; right: 10px;
+        <div id="chatBox" style=" position: absolute; top: 100px; right: 10px;
          z-index: 1000;  /* ← 追加: これでPhaserより前に出る */
          width: 300px; background: rgba(0,0,0,0.5); color: white;
          padding: 10px; font-size: 14px;">
-            <div id="chatMessages" style="height: 150px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #ccc; padding: 5px;"></div>
             <div class="title">投票</div>
             <div calss="contents scroll" id="chat">
             <div calss="contents input">
-                <div>
-                    <input class="name" type="text" id="nameInput" placeholder="name" />
-                </div>
                 <div>
                     <input class="msg" type="text" id="msgInput" placeholder="message" />
                 </div>
@@ -215,7 +215,7 @@ export class DiscussionScene extends Phaser.Scene {
         const json = {
             id: this.generateId(),
             type: "vote",
-            name: document.getElementById('nameInput').value,
+            name: this.name,
             message: document.getElementById('msgInput').value,
             time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`,
             voteCount: 0
@@ -289,7 +289,7 @@ export class DiscussionScene extends Phaser.Scene {
                             background: rgba(0, 0, 0, 0.85);
                             color: white;
                             padding: 30px 50px;
-                            font-size: 32px;
+                            font-size: 20px;
                             border-radius: 10px;
                             box-shadow: 0 0 20px rgba(0,0,0,0.5);
                             text-align: center;
@@ -304,7 +304,10 @@ export class DiscussionScene extends Phaser.Scene {
 
                         const solutionDiv = document.getElementById('voteSolution');
 
-                        solutionDiv.innerHTML = `💡「${name}」のメッセージが<br>選ばれました！<br>"<${message}>"`;
+                        solutionDiv.innerHTML = `💡「${name}」のメッセージが選ばれました！<br>${message}<br><br>
+                                                この修正をするPlayerは、「${json.taskName}」`;
+                        
+
                         solutionDiv.style.display = 'block';
 
                         solutionDiv.className = 'solutionDiv';
@@ -398,7 +401,6 @@ export class DiscussionScene extends Phaser.Scene {
 
         sideElement.setAttribute('data-id', json.id);
         sideElement.appendChild(sideTextElement);
-        sideTextElement.appendChild(idElement);
         sideTextElement.appendChild(timeElement);
         sideTextElement.appendChild(nameElement);
         sideTextElement.appendChild(textElement);
