@@ -21,13 +21,6 @@ const PORT = 8080;
 
 const args = minimist(process.argv.slice(2));
 
-//global variable
-let iCountUser = 0;
-
-const globalMessages = []; // サーバーに届いたすべてのメッセージを保持
-
-const playerName = [];
-
 // Create an Express app
 const app = express();
 app.use(express.json());
@@ -52,6 +45,13 @@ const wss_chat = new WebSocketServer({ port:8081 });
 //  }  
 //});
 
+//global variable
+
+let globalMessages = []; // サーバーに届いたすべてのメッセージを保持
+
+let playerName = [];
+
+let voteMessage = [];
 
 let gameState = {
   currentTaskIndex: 0,
@@ -226,13 +226,16 @@ wss_chat.on('connection', (ws) => {
             //メッセージ送信
             client.send(JSON.stringify(json));
             globalMessages.push(json); // ← ここで保存
+            if(json.type === "vote"){
+              voteMessage.push(json);
+            }
           }
         });
         break;
       
        case "goodclickOn"://投票の際に、いいね！ボタンを押した場合
        case "goodclickOff":
-         const target = globalMessages.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
+         const target = voteMessage.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
          let taskName = "null";
          let randomIndex = 0;
          let decide_flag = 0;
@@ -268,6 +271,13 @@ wss_chat.on('connection', (ws) => {
               client.send(JSON.stringify(CountUpdate));
             }
           });
+          const index = voteMessage.findIndex(m => m.id === json.targetMessageId);
+          if (index !== -1) {
+            voteMessage[index] = target;
+          }
+          for(let i = 0; i < voteMessage.length; i++){
+            console.log("voteMessage[" + i + "] = " + voteMessage[i]);
+          }
          break;
      }
     });

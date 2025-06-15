@@ -62,6 +62,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.initChatSocket();      //WebSocketの初期化
         this.createopenjitsi();     //jitsi-meetボタン（例）
         
+        if(!this.isSocket){
         //ゲーム操作側のサーバの受信処理
         this.socket.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
@@ -93,8 +94,9 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             if(data.type == 'clickReport'){
                 this.someoneClickReport();
             }
-
+            this.isSocket = true;
         });
+    }
     }
 
     updateGameState(state) {
