@@ -23,6 +23,8 @@ export class DiscussionScene extends Phaser.Scene {
         this.vote_flag = 0;  // 投票を一人一回までにするため
         this.voting_flag = 0; // 入れれる票数を一つにするため
         this.voting_id = "null";
+        this.proposal_count = 0;
+        this.proposal = [];
     }
 
     preload() {
@@ -159,6 +161,7 @@ export class DiscussionScene extends Phaser.Scene {
                 document.querySelectorAll('.solutionDiv').forEach(el => {
                     el.style.display = 'none';
                 });
+                this.votingDiv.innerHTML = '';
                 this.scene.start('MainGameScene')
             });
     }
@@ -176,12 +179,12 @@ export class DiscussionScene extends Phaser.Scene {
     createVoteWindow(){
         // チャットUI用のDOM要素を追加（CSSは必要に応じて調整）
         const voteHTML =` 
-        <div id="chatBox" style=" position: absolute; top: 100px; right: 10px;
+        <div id="voteBox" style=" position: absolute; top: 100px; right: 10px;
          z-index: 1000;  /* ← 追加: これでPhaserより前に出る */
          width: 300px; background: rgba(0,0,0,0.5); color: white;
          padding: 10px; font-size: 14px;">
             <div class="title">投票</div>
-            <div calss="contents scroll" id="chat">
+            <div calss="contents scroll" id="vote">
             <div calss="contents input">
                 <div>
                     <input class="msg" type="text" id="msgInput" placeholder="message" />
@@ -239,19 +242,66 @@ export class DiscussionScene extends Phaser.Scene {
         this.ws.onmessage = (event) => {
             const json = JSON.parse(event.data);
             console.log("json = " + json);
-            const chatDiv = document.getElementById('chat');
+            const voteDiv = document.getElementById('vote');
 
             switch (json.type) {
                 case "chat":
+                    console.log("Discuss");
                     //const chatDiv = document.getElementById('chat');
-                    chatDiv.appendChild(this.createMessage(json));
-                    chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                    voteDiv.appendChild(this.createMessage(json));
+                    voteDiv.scrollTo(0, voteDiv.scrollHeight);
                     break;
 
                 case "vote":
-                    //const voteDiv = document.getElementById('chat');
-                    chatDiv.appendChild(this.createVote(json));
-                    chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                    this.proposal_count++;
+                    this.proposal.push(json);
+                    
+                    if(this.proposal_count % 3 !== 0){
+                        const proposalHTML = `
+                        <div id="someoneProposal" style="display: none;position: fixed;top: 20%;left: 50%;
+                            transform: translate(-50%, -50%);z-index: 9999;background: rgba(0, 0, 0, 0.85);
+                            color: white;padding: 30px 50px;font-size: 16px;border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);text-align: center;">
+                        </div>
+                        `;
+
+                        // 要素作成と追加
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = proposalHTML;
+                        document.body.appendChild(wrapper);
+
+                        this.proposalDiv = document.getElementById('someoneProposal');
+
+                        this.proposalDiv.innerHTML = `💡「${this.proposal_count % 3}人が修正案を出しました」<br>
+                                                        投票開始まで後${3 - this.proposal_count % 3}人`;
+                        this.proposalDiv.style.display = 'block';
+
+                    }else{
+                        this.proposalDiv.style.display = 'none';
+                        const votingHTML = `
+                        <div id="voting" style="display: none;position: fixed;top: 50%;left: 50%;
+                            transform: translate(-50%, -50%);z-index: 9999;background: rgba(0, 0, 0, 0.85);
+                            color: white;padding: 30px 50px;font-size: 16px;border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);text-align: center;">
+                            <div class="title">投票</div>
+                            <div calss="contents scroll" id="voting">
+                        </div>
+                        `;
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = votingHTML;
+                        document.body.appendChild(wrapper);
+
+                        this.votingDiv = document.getElementById('voting');
+                        console.log("proposal_count = " + this.proposal_count);
+                        for(let i = this.proposal_count - 3; i < this.proposal_count; i++){
+                            console.log("i = " + i);
+                            console.log(this.proposal[i].message);
+                            console.log("投票中");
+                            this.votingDiv.appendChild(this.createVote(this.proposal[i]));
+                            this.votingDiv.scrollTo(0,this.votingDiv.scrollHeight);
+                        }
+                        this.votingDiv.style.display = 'block';
+                    }
                     break;
 
                 case "uuid":
@@ -273,6 +323,7 @@ export class DiscussionScene extends Phaser.Scene {
                     }
                     //三票入れられると、解決方法がでかでか表示
                     if (json.voteCount === 3) {
+                        this.votingDiv.style.display = 'none';
                         const name = targetElement.querySelector('.name')?.textContent || '(no name)';
                         const message = targetElement.querySelector('.message')?.textContent || '(no message)';
                         console.log("🌟 解決方法：");

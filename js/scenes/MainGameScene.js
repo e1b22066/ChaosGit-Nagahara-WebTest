@@ -58,8 +58,8 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.setupInput();         // 入力設定
         this.setupSocketListeners(); // ソケットリスナの設定
         this.scenario();
-        this.addChatUI();           //チャットUIをDOMで追加
         this.initChatSocket();      //WebSocketの初期化
+        this.addChatUI();           //チャットUIをDOMで追加
         this.createopenjitsi();     //jitsi-meetボタン（例）
         
         if(!this.isSocket){
@@ -280,9 +280,16 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             if(json.uuid){
                 uuid = json.uuid;
             }else{
+                console.log("Main");
                 const chatDiv = document.getElementById('chat');
-                chatDiv.appendChild(this.createMessage(json));
-                chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                if (chatDiv) {
+                    console.log("chatDivあり");
+                    console.log(json.message);
+                    chatDiv.appendChild(this.createMessage(json));
+                    chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                } else {
+                    console.warn("chatDiv が存在しません。現在のシーンに #chat がありません。");
+                }
             }
         };
     }

@@ -207,16 +207,29 @@ wss_chat.on('connection', (ws) => {
 
   //メッセージ受信処理
   ws.on('message', (data) => {
-    const json = JSON.parse(data);
-    switch(json.type){
-
-      case "name":
+    try {
+      const json = JSON.parse(data);
+      
+      if(json.type === "name"){
         playerName.push(json.name);
         console.log("name is " + json.name);
-        break;
+      }
 
-      case "chat":
-      case "vote":
+      if(json.type === "chat"){
+        if(!json.message) return;
+        //Websocket 接続中のクライアント対象にメッセージ送信
+        wss_chat.clients.forEach((client) => {
+          //メッセージ送信先クライアントがメッセージ受信クライアントの判定を設定
+          json.mine = ws === client;
+          if(client.readyState === WebSocket.OPEN){
+            //メッセージ送信
+            client.send(JSON.stringify(json));
+            globalMessages.push(json); // ← ここで保存
+          }
+        });
+      }
+      
+      if(json.type === "vote"){
         if(!json.message) return;
         //Websocket 接続中のクライアント対象にメッセージ送信
         wss_chat.clients.forEach((client) => {
@@ -231,11 +244,10 @@ wss_chat.on('connection', (ws) => {
             }
           }
         });
-        break;
-      
-       case "goodclickOn"://投票の際に、いいね！ボタンを押した場合
-       case "goodclickOff":
-         const target = voteMessage.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
+      }
+
+      if(json.type === "goodclickOn" || json.type === "goodclickOff"){
+        const target = voteMessage.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
          let taskName = "null";
          let randomIndex = 0;
          let decide_flag = 0;
@@ -275,11 +287,10 @@ wss_chat.on('connection', (ws) => {
           if (index !== -1) {
             voteMessage[index] = target;
           }
-          for(let i = 0; i < voteMessage.length; i++){
-            console.log("voteMessage[" + i + "] = " + voteMessage[i]);
-          }
-         break;
-     }
+      }  
+    } catch (error) {
+      console.error('Error parsing message:', error);
+    }
     });
 });
 
