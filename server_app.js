@@ -21,11 +21,6 @@ const PORT = 8080;
 
 const args = minimist(process.argv.slice(2));
 
-//global variable
-let iCountUser = 0;
-
-const globalMessages = []; // サーバーに届いたすべてのメッセージを保持
-
 // Create an Express app
 const app = express();
 app.use(express.json());
@@ -50,6 +45,13 @@ const wss_chat = new WebSocketServer({ port:8081 });
 //  }  
 //});
 
+//global variable
+
+let globalMessages = []; // サーバーに届いたすべてのメッセージを保持
+
+let playerName = [];
+
+let voteMessage = [];
 
 let gameState = {
   currentTaskIndex: 0,
@@ -181,7 +183,8 @@ wss_system.on('connection', (ws) => {
 
       // Trigger discussion phase
       if (data.type === 'reportIssue') {
-        broadcast({ type: 'enterDiscussion' });
+        broadcast({ type: 'clickReport' });
+        //broadcast({ type: 'enterDiscussion' });
       }
 
     } catch (error) {
@@ -204,11 +207,15 @@ wss_chat.on('connection', (ws) => {
 
   //メッセージ受信処理
   ws.on('message', (data) => {
-    const json = JSON.parse(data);
+    try {
+      const json = JSON.parse(data);
+      
+      if(json.type === "name"){
+        playerName.push(json.name);
+        console.log("name is " + json.name);
+      }
 
-    switch(json.type){
-      case "chat":
-      case "vote":
+      if(json.type === "chat"){
         if(!json.message) return;
         //Websocket 接続中のクライアント対象にメッセージ送信
         wss_chat.clients.forEach((client) => {
@@ -220,12 +227,31 @@ wss_chat.on('connection', (ws) => {
             globalMessages.push(json); // ← ここで保存
           }
         });
-        break;
+      }
       
-       case "goodclickOn"://投票の際に、いいね！ボタンを押した場合
-       case "goodclickOff":
-         const target = globalMessages.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
-        
+      if(json.type === "vote"){
+        if(!json.message) return;
+        //Websocket 接続中のクライアント対象にメッセージ送信
+        wss_chat.clients.forEach((client) => {
+          //メッセージ送信先クライアントがメッセージ受信クライアントの判定を設定
+          json.mine = ws === client;
+          if(client.readyState === WebSocket.OPEN){
+            //メッセージ送信
+            client.send(JSON.stringify(json));
+            globalMessages.push(json); // ← ここで保存
+            if(json.type === "vote"){
+              voteMessage.push(json);
+            }
+          }
+        });
+      }
+
+      if(json.type === "goodclickOn" || json.type === "goodclickOff"){
+        const target = voteMessage.find(m => m.id === json.targetMessageId);  //どのメッセージかを識別するid
+         let taskName = "null";
+         let randomIndex = 0;
+         let decide_flag = 0;
+         
           if(json.type === "goodclickOn"){
             target.voteCount++;
           }
@@ -233,10 +259,22 @@ wss_chat.on('connection', (ws) => {
             target.voteCount--;
           }
 
+          if(target.voteCount === 3){
+            while(decide_flag === 0){
+              randomIndex = Math.floor(Math.random() * playerName.length);
+              if(target.name !== playerName[randomIndex]){
+                taskName = playerName[randomIndex];
+                decide_flag = 1;
+              }
+            }
+              console.log(`選ばれたPlayer: ${taskName}`);
+          }
+
           const CountUpdate = {
             type: "goodclick",
             targetMessageId: target.id,
             voteCount: target.voteCount,
+            taskName: taskName
           };
 
           wss_chat.clients.forEach((client) => {
@@ -245,8 +283,14 @@ wss_chat.on('connection', (ws) => {
               client.send(JSON.stringify(CountUpdate));
             }
           });
-         break;
-     }
+          const index = voteMessage.findIndex(m => m.id === json.targetMessageId);
+          if (index !== -1) {
+            voteMessage[index] = target;
+          }
+      }  
+    } catch (error) {
+      console.error('Error parsing message:', error);
+    }
     });
 });
 

@@ -1,15 +1,19 @@
 //Among USのような、投票機能をもったディスカッション機能を作る
 //
 //Among Usにのとって、
-//　　１．Sabotageが何かしたと気づいたときは、別のをチャットを立ち上げ(立ち上げ後の画面)　ここまで完成(6/4)
-//　　２．投票機能のように、それぞれがどのような対策をするかの案を出し、いいものに投票する  
-// 　　sendとvoteの使い分け投票のグッドを遅れるまでは行けたサーバ側の処理はまだなため、追記の必要あり、(6/5)
-//       
-//     グットボタンを押した際に、サーバ間での通信完成、既存のメッセージに内容更新することが出来た(6/7)     
-//     
-//　　３．多数決で決定し、一番投票の多かった案で、Sabotageの妨害を修正する。
-//       次やること三票入った案に大きく表示これで対策して下さいと出力する。(6/9完成)
-//       一人一票だけにしたい。また、投票の切り替えもできるようにしたい。  (6/9完成)
+//　・投票機能が、スムーズにゲームに溶け込むように変更。
+//　　１．Sabotageが邪魔をした際に、全員が見つかれば、投票モードに移動する。(6/12完成)
+//　　　　（初めて、Reportボタンを押すと、Main画面上に「誰かがSabotageの邪魔を見つけました」的な奴を表示し、全員
+//　　　　が調べる機会を設ける）
+//　　※ついでに、画面が切り替わるごとに、表示されているHTMLの正常な切り替えも実装した。
+//　　２．投票機能終了後の、誰が決めるかなどはまだ未定・未実装であるためそのあたりを詰める。(6/15完成)
+//       修正した内容をランダムで、決める機能を実装。
+// 　　　名前は、開始時に入力するようにし、サーバ側にも名前を保存できるようにした。
+//       修正案を提示した人は、実際の修正係にならないようにしている。
+//       画面読み込み二回目以降にボタンが複数回判定されるのを修正。
+//　　３．どこか詰まるあたりがあるのか調べる。
+//　　４．多数決や時間制限など様々場合を検証できるように複数パターン用意しておく。
+//　・投票機能において、どのように振り返り要素に持っていくのか考える。
 //
 //　　４．誰が選ばれたなどは、あとあと振り返りで使う。
 export class DiscussionScene extends Phaser.Scene {
@@ -19,6 +23,8 @@ export class DiscussionScene extends Phaser.Scene {
         this.vote_flag = 0;  // 投票を一人一回までにするため
         this.voting_flag = 0; // 入れれる票数を一つにするため
         this.voting_id = "null";
+        this.proposal_count = 0;
+        this.proposal = [];
     }
 
     preload() {
@@ -33,6 +39,7 @@ export class DiscussionScene extends Phaser.Scene {
     init(data) {
         //this.socket = data.socket;
         this.ws = data.ws;
+        this.name = data.name;
         this.addChatUI = data.addChatUI; 
         this.sendMessage = data.sendMessage;
         //this.initChatSocket = data.initChatSocket;
@@ -150,7 +157,13 @@ export class DiscussionScene extends Phaser.Scene {
         this.add.image(x, y, 'backButton')
             .setInteractive()
             .setScale(buttonScale)
-            .on('pointerdown', () => this.scene.start('MainGameScene'));
+            .on('pointerdown', () => {
+                document.querySelectorAll('.solutionDiv').forEach(el => {
+                    el.style.display = 'none';
+                });
+                this.votingDiv.innerHTML = '';
+                this.scene.start('MainGameScene')
+            });
     }
 
     openTerminal() {
@@ -166,17 +179,13 @@ export class DiscussionScene extends Phaser.Scene {
     createVoteWindow(){
         // チャットUI用のDOM要素を追加（CSSは必要に応じて調整）
         const voteHTML =` 
-        <div id="chatBox" style=" position: absolute; top: 10px; right: 10px;
+        <div id="voteBox" style=" position: absolute; top: 100px; right: 10px;
          z-index: 1000;  /* ← 追加: これでPhaserより前に出る */
          width: 300px; background: rgba(0,0,0,0.5); color: white;
          padding: 10px; font-size: 14px;">
-            <div id="chatMessages" style="height: 150px; overflow-y: auto; margin-bottom: 5px; border: 1px solid #ccc; padding: 5px;"></div>
             <div class="title">投票</div>
-            <div calss="contents scroll" id="chat">
+            <div calss="contents scroll" id="vote">
             <div calss="contents input">
-                <div>
-                    <input class="name" type="text" id="nameInput" placeholder="name" />
-                </div>
                 <div>
                     <input class="msg" type="text" id="msgInput" placeholder="message" />
                 </div>
@@ -210,7 +219,7 @@ export class DiscussionScene extends Phaser.Scene {
         const json = {
             id: this.generateId(),
             type: "vote",
-            name: document.getElementById('nameInput').value,
+            name: this.name,
             message: document.getElementById('msgInput').value,
             time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`,
             voteCount: 0
@@ -233,19 +242,66 @@ export class DiscussionScene extends Phaser.Scene {
         this.ws.onmessage = (event) => {
             const json = JSON.parse(event.data);
             console.log("json = " + json);
-            const chatDiv = document.getElementById('chat');
+            const voteDiv = document.getElementById('vote');
 
             switch (json.type) {
                 case "chat":
+                    console.log("Discuss");
                     //const chatDiv = document.getElementById('chat');
-                    chatDiv.appendChild(this.createMessage(json));
-                    chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                    voteDiv.appendChild(this.createMessage(json));
+                    voteDiv.scrollTo(0, voteDiv.scrollHeight);
                     break;
 
                 case "vote":
-                    //const voteDiv = document.getElementById('chat');
-                    chatDiv.appendChild(this.createVote(json));
-                    chatDiv.scrollTo(0, chatDiv.scrollHeight);
+                    this.proposal_count++;
+                    this.proposal.push(json);
+                    
+                    if(this.proposal_count % 3 !== 0){
+                        const proposalHTML = `
+                        <div id="someoneProposal" style="display: none;position: fixed;top: 20%;left: 50%;
+                            transform: translate(-50%, -50%);z-index: 9999;background: rgba(0, 0, 0, 0.85);
+                            color: white;padding: 30px 50px;font-size: 16px;border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);text-align: center;">
+                        </div>
+                        `;
+
+                        // 要素作成と追加
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = proposalHTML;
+                        document.body.appendChild(wrapper);
+
+                        this.proposalDiv = document.getElementById('someoneProposal');
+
+                        this.proposalDiv.innerHTML = `💡「${this.proposal_count % 3}人が修正案を出しました」<br>
+                                                        投票開始まで後${3 - this.proposal_count % 3}人`;
+                        this.proposalDiv.style.display = 'block';
+
+                    }else{
+                        this.proposalDiv.style.display = 'none';
+                        const votingHTML = `
+                        <div id="voting" style="display: none;position: fixed;top: 50%;left: 50%;
+                            transform: translate(-50%, -50%);z-index: 9999;background: rgba(0, 0, 0, 0.85);
+                            color: white;padding: 30px 50px;font-size: 16px;border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);text-align: center;">
+                            <div class="title">投票</div>
+                            <div calss="contents scroll" id="voting">
+                        </div>
+                        `;
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = votingHTML;
+                        document.body.appendChild(wrapper);
+
+                        this.votingDiv = document.getElementById('voting');
+                        console.log("proposal_count = " + this.proposal_count);
+                        for(let i = this.proposal_count - 3; i < this.proposal_count; i++){
+                            console.log("i = " + i);
+                            console.log(this.proposal[i].message);
+                            console.log("投票中");
+                            this.votingDiv.appendChild(this.createVote(this.proposal[i]));
+                            this.votingDiv.scrollTo(0,this.votingDiv.scrollHeight);
+                        }
+                        this.votingDiv.style.display = 'block';
+                    }
                     break;
 
                 case "uuid":
@@ -267,6 +323,7 @@ export class DiscussionScene extends Phaser.Scene {
                     }
                     //三票入れられると、解決方法がでかでか表示
                     if (json.voteCount === 3) {
+                        this.votingDiv.style.display = 'none';
                         const name = targetElement.querySelector('.name')?.textContent || '(no name)';
                         const message = targetElement.querySelector('.message')?.textContent || '(no message)';
                         console.log("🌟 解決方法：");
@@ -284,7 +341,7 @@ export class DiscussionScene extends Phaser.Scene {
                             background: rgba(0, 0, 0, 0.85);
                             color: white;
                             padding: 30px 50px;
-                            font-size: 32px;
+                            font-size: 20px;
                             border-radius: 10px;
                             box-shadow: 0 0 20px rgba(0,0,0,0.5);
                             text-align: center;
@@ -299,8 +356,13 @@ export class DiscussionScene extends Phaser.Scene {
 
                         const solutionDiv = document.getElementById('voteSolution');
 
-                        solutionDiv.innerHTML = `💡「${name}」のメッセージが<br>選ばれました！<br>"<${message}>"`;
+                        solutionDiv.innerHTML = `💡「${name}」のメッセージが選ばれました！<br>${message}<br><br>
+                                                この修正をするPlayerは、「${json.taskName}」`;
+                        
+
                         solutionDiv.style.display = 'block';
+
+                        solutionDiv.className = 'solutionDiv';
 
                         //MainHTMLList.innerHTML = solutionHTML;
                         //document.body.appendChild(MainHTMLList);
@@ -310,11 +372,9 @@ export class DiscussionScene extends Phaser.Scene {
                         //banner.textContent = `💡 「${name}」のメッセージが選ばれました！\n"${message}"`;
 
                         // 3秒後に非表示
-                        /*
-                        setTimeout(() => {
-                            wrapper.remove(); // or solutionDiv.style.display = 'none';
-                        }, 3000);
-                        */
+                        //setTimeout(() => {
+                        //    wrapper.remove(); // or solutionDiv.style.display = 'none';
+                        //}, 3000);
                     }
                     break;
             }
@@ -393,7 +453,6 @@ export class DiscussionScene extends Phaser.Scene {
 
         sideElement.setAttribute('data-id', json.id);
         sideElement.appendChild(sideTextElement);
-        sideTextElement.appendChild(idElement);
         sideTextElement.appendChild(timeElement);
         sideTextElement.appendChild(nameElement);
         sideTextElement.appendChild(textElement);
