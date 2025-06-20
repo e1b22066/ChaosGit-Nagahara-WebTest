@@ -92,7 +92,11 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             }
 
             if(data.type == 'clickReport'){
-                this.someoneClickReport();
+                this.someoneClickReport('clickReport');
+            }
+
+            if(data.type == 'cancelReport'){
+                this.someoneClickReport('cancelReport');
             }
             this.isSocket = true;
         });
@@ -437,7 +441,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         }
     }
 
-    someoneClickReport(){
+    someoneClickReport(type){
         const clickReportHTML = `
                         <div id="someoneClickReport" style="
                             display: none;
@@ -464,11 +468,19 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
                         const clickReportDiv = document.getElementById('someoneClickReport');
 
-                        this.clickReport_count++;
+                        if(type === 'clickReport'){
+                            this.clickReport_count++;
+                        }else if(type === 'cancelReport'){
+                            this.clickReport_count--;
+                        }
 
                         clickReportDiv.innerHTML = `💡「${this.clickReport_count}人がSabotageの邪魔を見つけました」<br>
                                                         投票開始まで後${3-this.clickReport_count}人`;
                         clickReportDiv.style.display = 'block';
+
+                        if(this.clickReport_count === 0){
+                            clickReportDiv.style.display = 'none';
+                        }
 
                         if(this.clickReport_count === 3){
                             clickReportDiv.style.display = 'none';
@@ -530,7 +542,47 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             });
     }
 
+    cancelReportButton(){
+        const cancelReportHTML = `
+                        <div id="cancelReport" style="display: none;position: fixed;top: 110px;left: 200px;
+                            transform: translate(-50%, -50%);z-index: 9999;background: rgba(0, 0, 0, 0.85);
+                            color: white;padding: 30px 50px;font-size: 16px;border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);text-align: center;">
+                        </div>
+                        `;
+
+                        // 要素作成と追加
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = cancelReportHTML;
+                        document.body.appendChild(wrapper);
+
+                        this.cancelReportDiv = document.getElementById('cancelReport');
+
+                        this.cancelReportDiv.innerHTML = `Reportを取り消し<br>
+                                                         <button id="cancelReportBtn"()">Cancel</button>`;
+                
+                        this.cancelReportDiv.style.display = 'block';
+
+                        const cancelReportBtn = document.getElementById("cancelReportBtn");
+                        if (cancelReportBtn) {
+                            cancelReportBtn.addEventListener("click", this.cancelReportSend.bind(this));
+                        } else {
+                            console.warn("chatSendBtn が見つかりませんでした");
+                        }
+    }
+
+    cancelReportSend(){
+        this.cancelReportDiv.style.display = 'none';
+        const message = JSON.stringify({ type: 'cancelReport' });
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(message);
+        } else {
+            console.warn('Socket is not open. Cannot send message.');
+        }
+    }
+
     reportIssue() {
+        this.cancelReportButton();
         const message = JSON.stringify({ type: 'reportIssue' });
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(message);

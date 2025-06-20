@@ -187,6 +187,10 @@ wss_system.on('connection', (ws) => {
         //broadcast({ type: 'enterDiscussion' });
       }
 
+      if(data.type === 'cancelReport'){
+        broadcast({ type: 'cancelReport' });
+      }
+
     } catch (error) {
       console.error('Error parsing message:', error);
     }
