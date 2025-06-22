@@ -26,7 +26,7 @@
 
 //間違えた操作を行った際の対処法
 //  ・間違えてReportボタンをおした。6/20完成
-//  ・間違えた修正案を送信
+//  ・間違えた修正案を送信         6/22完成
 //  ・投票する修正案を間違えた。6/17完成
 //　　４．多数決や時間制限など様々場合を検証できるように複数パターン用意しておく。
 //　・投票機能において、どのように振り返り要素に持っていくのか考える。
@@ -41,6 +41,7 @@ export class DiscussionScene extends Phaser.Scene {
         this.voting_id = "null";
         this.proposal_count = 0;
         this.proposal = [];
+        this.activePps = "null";
     }
 
     preload() {
@@ -207,6 +208,7 @@ export class DiscussionScene extends Phaser.Scene {
                 </div>
                  <button id="chatSendBtn"()">Send</button>
                  <button id="voteSendBtn"()">Vote</button>
+                 <button id="cancelBtn"()">Cancel</button>
             </div>
             </div>
         </div>
@@ -225,6 +227,13 @@ export class DiscussionScene extends Phaser.Scene {
         const voteSendBtn = document.getElementById("voteSendBtn");
         if (voteSendBtn) {
             voteSendBtn.addEventListener("click", this.voteMessage.bind(this));
+        } else {
+            console.warn("chatSendBtn が見つかりませんでした");
+        }
+
+        const cancelBtn = document.getElementById("cancelBtn");
+        if (cancelBtn) {
+            cancelBtn.addEventListener("click", this.cancelVote.bind(this));
         } else {
             console.warn("chatSendBtn が見つかりませんでした");
         }
@@ -247,8 +256,25 @@ export class DiscussionScene extends Phaser.Scene {
             this.ws.send(JSON.stringify(json));  
             document.getElementById('msgInput').value = '';
             this.vote_flag = 1;
+            this.activePps = json.id;
         }else{
             console.log("発表済み");
+        }
+    }
+
+    cancelVote(){
+        if(this.vote_flag === 1){
+            this.vote_flag = 0;
+            
+            const json = {
+                type: "voteCancel",
+                activePps: this.activePps        
+            };
+
+            console.log("キャンセル");
+            this.ws.send(JSON.stringify(json));  
+        }else{
+            console.log("未発表");
         }
     }
 
@@ -269,8 +295,19 @@ export class DiscussionScene extends Phaser.Scene {
                     break;
 
                 case "vote":
-                    this.proposal_count++;
-                    this.proposal.push(json);
+                case "voteCancel":
+                    if(json.type === "vote"){
+                        this.proposal_count++;
+                        this.proposal.push(json);
+                    }
+
+                    if(json.type === "voteCancel"){
+                        this.proposal_count--;
+                        const index = this.proposal.findIndex(m => m.id === json.id);
+                        if (index !== -1) {
+                          this.proposal.splice(index, 1); // 特定の要素を削除
+                        }
+                    }
                     
                     if(this.proposal_count % 3 !== 0){
                         const proposalHTML = `
@@ -481,5 +518,6 @@ export class DiscussionScene extends Phaser.Scene {
         this.vote_flag = 0;
         this.voting_flag = 0;
         this.voting_id = "null";
+        this.activePps = "null";
     }
 }

@@ -7,6 +7,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             playerPosition: { x: null, y: null }
         };
         this.clickReport_count = 0;
+        this.clickReport_flag = 0;
     }
 
     init(data) {
@@ -542,50 +543,18 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             });
     }
 
-    cancelReportButton(){
-        const cancelReportHTML = `
-                        <div id="cancelReport" style="display: none;position: fixed;top: 110px;left: 200px;
-                            transform: translate(-50%, -50%);z-index: 9999;background: rgba(0, 0, 0, 0.85);
-                            color: white;padding: 30px 50px;font-size: 16px;border-radius: 10px;
-                            box-shadow: 0 0 20px rgba(0,0,0,0.5);text-align: center;">
-                        </div>
-                        `;
-
-                        // 要素作成と追加
-                        const wrapper = document.createElement('div');
-                        wrapper.innerHTML = cancelReportHTML;
-                        document.body.appendChild(wrapper);
-
-                        this.cancelReportDiv = document.getElementById('cancelReport');
-
-                        this.cancelReportDiv.innerHTML = `Reportを取り消し<br>
-                                                         <button id="cancelReportBtn"()">Cancel</button>`;
-                
-                        this.cancelReportDiv.style.display = 'block';
-
-                        const cancelReportBtn = document.getElementById("cancelReportBtn");
-                        if (cancelReportBtn) {
-                            cancelReportBtn.addEventListener("click", this.cancelReportSend.bind(this));
-                        } else {
-                            console.warn("chatSendBtn が見つかりませんでした");
-                        }
-    }
-
-    cancelReportSend(){
-        this.cancelReportDiv.style.display = 'none';
-        const message = JSON.stringify({ type: 'cancelReport' });
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.socket.send(message);
-        } else {
-            console.warn('Socket is not open. Cannot send message.');
-        }
-    }
-
     reportIssue() {
-        this.cancelReportButton();
-        const message = JSON.stringify({ type: 'reportIssue' });
+        //this.cancelReportButton();
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.socket.send(message);
+            if(this.clickReport_flag === 0){
+                const message = JSON.stringify({ type: 'reportIssue' });
+                this.clickReport_flag = 1;
+                this.socket.send(message);
+            }else{
+                const message = JSON.stringify({ type: 'cancelReport' });
+                this.clickReport_flag = 0;
+                this.socket.send(message);
+            }
         } else {
             console.warn('Socket is not open. Cannot send message.');
         }
@@ -671,6 +640,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         const MainHTMLList = document.getElementById('MainHTMLList');
         MainHTMLList.innerHTML = ``;
         this.clickReport_count = 0;
+        this.clickReport_flag = 0;
     }
 
     generateId() {

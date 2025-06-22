@@ -219,6 +219,27 @@ wss_chat.on('connection', (ws) => {
         console.log("name is " + json.name);
       }
 
+      if(json.type === "voteCancel"){
+         const index = voteMessage.findIndex(m => m.id === json.activePps);
+         if (index !== -1) {
+           voteMessage.splice(index, 1); // 特定の要素を削除
+         }
+
+         const voteCancel = {
+            type: "voteCancel",
+            id: json.activePps
+          };
+
+         wss_chat.clients.forEach((client) => {
+          //メッセージ送信先クライアントがメッセージ受信クライアントの判定を設定
+          json.mine = ws === client;
+          if(client.readyState === WebSocket.OPEN){
+            //メッセージ送信
+            client.send(JSON.stringify(voteCancel));
+          }
+        });
+      }
+
       if(json.type === "chat"){
         if(!json.message) return;
         //Websocket 接続中のクライアント対象にメッセージ送信
@@ -242,7 +263,7 @@ wss_chat.on('connection', (ws) => {
           if(client.readyState === WebSocket.OPEN){
             //メッセージ送信
             client.send(JSON.stringify(json));
-            globalMessages.push(json); // ← ここで保存
+            //globalMessages.push(json); // ← ここで保存
             if(json.type === "vote"){
               voteMessage.push(json);
             }
