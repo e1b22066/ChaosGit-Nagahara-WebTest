@@ -47,6 +47,10 @@ const wss_chat = new WebSocketServer({ port:8081 });
 
 //global variable
 
+let checkReport_count = 0;
+
+let checkReport = [];
+
 let globalMessages = []; // サーバーに届いたすべてのメッセージを保持
 
 let playerName = [];
@@ -183,14 +187,66 @@ wss_system.on('connection', (ws) => {
 
       // Trigger discussion phase
       if (data.type === 'reportIssue') {
-        broadcast({ type: 'clickReport' });
+        checkReport_count++;
+        checkReport.push(data);
+        if (checkReport_count === 3) {
+          checkReport_count = 0;
+
+          const messages = checkReport.map(r => r.message);
+
+          // 出現回数をカウント
+          const counts = {};
+          for (const msg of messages) {
+            counts[msg] = (counts[msg] || 0) + 1;
+          }
+
+          const uniqueMessages = Object.keys(counts);
+
+          if (uniqueMessages.length === 1) {
+            // 全員一致 → 何もしない（空白）
+            console.log(" 全員一致（空白）");
+            broadcast({ 
+              type: 'clickReport',
+              flag: 1
+            });
+          } else if (uniqueMessages.length === 2) {
+            // 2人 vs 1人 → 誰が違ったのか表示
+            const diffMessage = uniqueMessages.find(msg => counts[msg] === 1);
+            const diffPerson = checkReport.find(r => r.message === diffMessage);
+
+            console.log(`${diffPerson.name} さんだけ異なる報告です`);
+            
+            broadcast({
+              type: 'clickReport',
+              flag: 0,
+              message: `${diffPerson.name} さんだけ異なる報告です`              
+            });
+
+          } else {
+            // 全員バラバラ
+            console.log("全員報告がバラバラです");
+
+            broadcast({
+              type: 'clickReport',
+              flag: 0,
+              message: "全員報告がバラバラです"
+            });
+          }
+
+          // レポート内容を初期化
+          checkReport = [];
+
+        } else {
+          broadcast({ type: 'clickReport' });
+        }
         //broadcast({ type: 'enterDiscussion' });
       }
 
       if(data.type === 'cancelReport'){
+        checkReport_count--;
+        console.log("checkReport_count = " + checkReport_count);
         broadcast({ type: 'cancelReport' });
       }
-
     } catch (error) {
       console.error('Error parsing message:', error);
     }

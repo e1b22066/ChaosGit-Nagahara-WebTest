@@ -8,6 +8,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         };
         this.clickReport_count = 0;
         this.clickReport_flag = 0;
+        this.finishReport_flag = 0;
     }
 
     init(data) {
@@ -61,9 +62,9 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.scenario();
         this.initChatSocket();      //WebSocketの初期化
         this.addChatUI();           //チャットUIをDOMで追加
-        this.createopenjitsi();     //jitsi-meetボタン（例）
         
         if(!this.isSocket){
+        this.createopenjitsi();     //jitsi-meetボタン（例）
         //ゲーム操作側のサーバの受信処理
         this.socket.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
@@ -93,11 +94,11 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             }
 
             if(data.type == 'clickReport'){
-                this.someoneClickReport('clickReport');
+                this.someoneClickReport(data);
             }
 
             if(data.type == 'cancelReport'){
-                this.someoneClickReport('cancelReport');
+                this.someoneClickReport(data);
             }
             this.isSocket = true;
         });
@@ -442,7 +443,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         }
     }
 
-    someoneClickReport(type){
+    someoneClickReport(data){
         const clickReportHTML = `
                         <div id="someoneClickReport" style="
                             display: none;
@@ -469,9 +470,9 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
                         const clickReportDiv = document.getElementById('someoneClickReport');
 
-                        if(type === 'clickReport'){
+                        if(data.type === 'clickReport'){
                             this.clickReport_count++;
-                        }else if(type === 'cancelReport'){
+                        }else if(data.type === 'cancelReport'){
                             this.clickReport_count--;
                         }
 
@@ -485,18 +486,36 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
                         if(this.clickReport_count === 3){
                             clickReportDiv.style.display = 'none';
-                            this.scene.start('DiscussionScene', { 
-                            socket: this.socket,
-                            ws: this.ws,
-                            name: this.name,
-                            addChatUI: this.addChatUI.bind(this),
-                            sendMessage:this.sendMessage.bind(this),
-                            initChatSocket: this.initChatSocket.bind(this),
-                            createDiv: this.createDiv.bind(this),
-                            createMessage: this.createMessage.bind(this),
-                            resetHTMLList: this.resetHTMLList.bind(this),
-                            generateId: this.generateId.bind(this)
-                            });
+                            if(data.flag){   //全員一致で画面遷移
+                                this.scene.start('DiscussionScene', { 
+                                socket: this.socket,
+                                ws: this.ws,
+                                name: this.name,
+                                addChatUI: this.addChatUI.bind(this),
+                                sendMessage:this.sendMessage.bind(this),
+                                initChatSocket: this.initChatSocket.bind(this),
+                                createDiv: this.createDiv.bind(this),
+                                createMessage: this.createMessage.bind(this),
+                                resetHTMLList: this.resetHTMLList.bind(this),
+                                generateId: this.generateId.bind(this)
+                                });
+                                return;
+                            }
+
+                            if(!data.flag){   //全員一致していなく画面遷移しない場合
+                               clickReportDiv.innerHTML = ``;
+                               clickReportDiv.innerHTML = `障害の内容にメンバー間で相違があります。」<br>
+                                                        ${data.message}`;
+                               clickReportDiv.style.display = 'block';
+                               this.clickReport_count = 0;
+                               this.clickReport_flag = 0;
+                               this.finishReport_flag = 0;
+
+                               // 5秒後に非表示にする
+                               setTimeout(() => {
+                                  clickReportDiv.style.display = 'none';
+                               }, 5000);
+                            }
                         }
     }
 
@@ -546,18 +565,84 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     reportIssue() {
         //this.cancelReportButton();
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            if(this.clickReport_flag === 0){
-                const message = JSON.stringify({ type: 'reportIssue' });
+            if(this.clickReport_flag === 0 && this.finishReport_flag === 0){
                 this.clickReport_flag = 1;
-                this.socket.send(message);
-            }else{
+                this.checkReport();
+                return;
+            }
+
+            if(this.clickReport_flag === 1 && this.finishReport_flag === 0){
+                this.clickReport_flag = 0;
+                if(this.checkReportDiv){
+                    this.checkReportDiv.style.display = 'none';
+                }
+                return;
+            }
+
+            if(this.clickReport_flag === 1 && this.finishReport_flag === 1){
                 const message = JSON.stringify({ type: 'cancelReport' });
                 this.clickReport_flag = 0;
+                this.finishReport_flag = 0;
                 this.socket.send(message);
             }
         } else {
             console.warn('Socket is not open. Cannot send message.');
         }
+    }
+
+    checkReport(){
+        const checkReportHTML = `
+                        <div id="checkReport" style="
+                            display: none;
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            z-index: 9999;
+                            background: rgba(0, 0, 0, 0.85);
+                            color: white;
+                            padding: 30px 50px;
+                            font-size: 16px;
+                            border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                            text-align: center;
+                        ">
+                        </div>
+                        `;
+
+                        // 要素作成と追加
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = checkReportHTML;
+                        document.body.appendChild(wrapper);
+
+                        this.checkReportDiv = document.getElementById('checkReport');
+
+                        this.checkReportDiv.innerHTML = `障害の原因は何ですか？<br>
+                                                  <div><input class="msg" type="text" id="checkMsgInput" placeholder="message" /></div>
+                                                  <button id="checkSendBtn"()">Send</button>`;
+                        this.checkReportDiv.style.display = 'block';
+
+                        const checkSendBtn = document.getElementById("checkSendBtn");
+                        if (checkSendBtn) {
+                            checkSendBtn.addEventListener("click", this.checkSend.bind(this));
+                        } else {
+                            console.warn("checkSendBtn が見つかりませんでした");
+                        }
+    }
+
+    checkSend(){
+        this.checkReportDiv.style.display = 'none';
+        this.finishReport_flag = 1;
+        const json = {
+            id: this.generateId(),
+            type: "reportIssue",
+            name: this.name,
+            message: document.getElementById('checkMsgInput').value
+        };
+        //メッセージ送信
+        console.log("メッセージ送信");
+        this.socket.send(JSON.stringify(json));  
+        document.getElementById('msgInput').value = '';
     }
 
     createPlayer() {
@@ -641,6 +726,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         MainHTMLList.innerHTML = ``;
         this.clickReport_count = 0;
         this.clickReport_flag = 0;
+        this.finishReport_flag = 0;
     }
 
     generateId() {

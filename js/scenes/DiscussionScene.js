@@ -178,7 +178,9 @@ export class DiscussionScene extends Phaser.Scene {
                 document.querySelectorAll('.solutionDiv').forEach(el => {
                     el.style.display = 'none';
                 });
-                this.votingDiv.innerHTML = '';
+                if(this.votingDiv){
+                    this.votingDiv.innerHTML = '';
+                }
                 this.scene.start('MainGameScene')
             });
     }
