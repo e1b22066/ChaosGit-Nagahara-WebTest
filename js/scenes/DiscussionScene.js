@@ -2,16 +2,32 @@
 //
 //Among Usにのとって、
 //　・投票機能が、スムーズにゲームに溶け込むように変更。
-//　　１．Sabotageが邪魔をした際に、全員が見つかれば、投票モードに移動する。(6/12完成)
-//　　　　（初めて、Reportボタンを押すと、Main画面上に「誰かがSabotageの邪魔を見つけました」的な奴を表示し、全員
-//　　　　が調べる機会を設ける）
-//　　※ついでに、画面が切り替わるごとに、表示されているHTMLの正常な切り替えも実装した。
-//　　２．投票機能終了後の、誰が決めるかなどはまだ未定・未実装であるためそのあたりを詰める。(6/15完成)
-//       修正した内容をランダムで、決める機能を実装。
-// 　　　名前は、開始時に入力するようにし、サーバ側にも名前を保存できるようにした。
-//       修正案を提示した人は、実際の修正係にならないようにしている。
-//       画面読み込み二回目以降にボタンが複数回判定されるのを修正。
-//　　３．どこか詰まるあたりがあるのか調べる。
+//　　Sabotageにより障害が発生した場合の一連処理
+//①　　　　　発見(Reportボタンをおす)6/17完成
+//　　　　　　　　　　 ↓　　↑
+//②　　　　　発見したやつが、間違えていないかの確認(
+//　　　　　　 相違があれば追い返し、追い返す人を相違があった人だけか全員化は未定)
+//　　　　　　 (どのように確認するかを考える必要あり)(実装もまだ)
+//　　　　　 ※最終的には生成AIなどを用いて参加者同士の相違を確認(ユーザ間で照らし合わせるか正解と照らし合わせる　
+//　　　　　　 かは未定)技術レベルが高いため、ある程度の流れを作成するためいったんは択一式で実装
+//　　　　　　　　　　 ↓
+//＝＝＝＝＝＝＝＝全員の進捗がそろう＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+//③　　　　　三人間違えていなければ、シーンの変更投票フェーズへ6/17完成
+//　　　　　　　　　　 ↓
+//④　　　　　修正案をそれぞれ決める。6/17完成
+//　　　　　　　　　　 ↓
+//＝＝＝＝＝＝＝＝全員の進捗がそろう＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+//⑤　　　　　参加者分の修正案が揃うと投票フェーズへ6/17完成
+//　　　　　　　　　　　 ↓
+//⑥　　　　　それぞれがいいなと思う修正案に投票6/17完成
+//　　　　　　　　　　　 ↓
+//＝＝＝＝＝＝＝＝全員の進捗がそろう＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+//⑦　　　　　投票によって決められた修正案と、ランダムで選ばれた修正者を表示6/17完成
+
+//間違えた操作を行った際の対処法
+//  ・間違えてReportボタンをおした。6/20完成
+//  ・間違えた修正案を送信         6/22完成
+//  ・投票する修正案を間違えた。6/17完成
 //　　４．多数決や時間制限など様々場合を検証できるように複数パターン用意しておく。
 //　・投票機能において、どのように振り返り要素に持っていくのか考える。
 //
@@ -25,6 +41,7 @@ export class DiscussionScene extends Phaser.Scene {
         this.voting_id = "null";
         this.proposal_count = 0;
         this.proposal = [];
+        this.activePps = "null";
     }
 
     preload() {
@@ -161,7 +178,9 @@ export class DiscussionScene extends Phaser.Scene {
                 document.querySelectorAll('.solutionDiv').forEach(el => {
                     el.style.display = 'none';
                 });
-                this.votingDiv.innerHTML = '';
+                if(this.votingDiv){
+                    this.votingDiv.innerHTML = '';
+                }
                 this.scene.start('MainGameScene')
             });
     }
@@ -191,6 +210,7 @@ export class DiscussionScene extends Phaser.Scene {
                 </div>
                  <button id="chatSendBtn"()">Send</button>
                  <button id="voteSendBtn"()">Vote</button>
+                 <button id="cancelBtn"()">Cancel</button>
             </div>
             </div>
         </div>
@@ -209,6 +229,13 @@ export class DiscussionScene extends Phaser.Scene {
         const voteSendBtn = document.getElementById("voteSendBtn");
         if (voteSendBtn) {
             voteSendBtn.addEventListener("click", this.voteMessage.bind(this));
+        } else {
+            console.warn("chatSendBtn が見つかりませんでした");
+        }
+
+        const cancelBtn = document.getElementById("cancelBtn");
+        if (cancelBtn) {
+            cancelBtn.addEventListener("click", this.cancelVote.bind(this));
         } else {
             console.warn("chatSendBtn が見つかりませんでした");
         }
@@ -231,8 +258,25 @@ export class DiscussionScene extends Phaser.Scene {
             this.ws.send(JSON.stringify(json));  
             document.getElementById('msgInput').value = '';
             this.vote_flag = 1;
+            this.activePps = json.id;
         }else{
             console.log("発表済み");
+        }
+    }
+
+    cancelVote(){
+        if(this.vote_flag === 1){
+            this.vote_flag = 0;
+            
+            const json = {
+                type: "voteCancel",
+                activePps: this.activePps        
+            };
+
+            console.log("キャンセル");
+            this.ws.send(JSON.stringify(json));  
+        }else{
+            console.log("未発表");
         }
     }
 
@@ -253,8 +297,19 @@ export class DiscussionScene extends Phaser.Scene {
                     break;
 
                 case "vote":
-                    this.proposal_count++;
-                    this.proposal.push(json);
+                case "voteCancel":
+                    if(json.type === "vote"){
+                        this.proposal_count++;
+                        this.proposal.push(json);
+                    }
+
+                    if(json.type === "voteCancel"){
+                        this.proposal_count--;
+                        const index = this.proposal.findIndex(m => m.id === json.id);
+                        if (index !== -1) {
+                          this.proposal.splice(index, 1); // 特定の要素を削除
+                        }
+                    }
                     
                     if(this.proposal_count % 3 !== 0){
                         const proposalHTML = `
@@ -465,5 +520,6 @@ export class DiscussionScene extends Phaser.Scene {
         this.vote_flag = 0;
         this.voting_flag = 0;
         this.voting_id = "null";
+        this.activePps = "null";
     }
 }
