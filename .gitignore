@@ -1,2 +1,3 @@
 # node_modulesディレクトリ下を無視する
 node_modules/*
+*.env
