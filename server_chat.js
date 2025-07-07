@@ -1,3 +1,4 @@
+//チャットを実装するための、仮サーバ Sample
 //モジュール
 const http	= require('http');
 const express	= require('express');
