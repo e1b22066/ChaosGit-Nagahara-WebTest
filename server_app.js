@@ -10,6 +10,9 @@ import { exec } from 'child_process';
 import minimist from 'minimist';
 import { Socket } from 'dgram';
 import { count } from 'console';
+import dotenv from 'dotenv';
+import axios from 'axios';
+
 
 // __dirname の代替
 const __filename = fileURLToPath(import.meta.url);
@@ -61,6 +64,14 @@ let gameState = {
   currentTaskIndex: 0,
   players: [],
 };
+
+//生成AI周り
+
+dotenv.config({ path: path.resolve(__dirname, '../APIキー/.env') });
+const API_KEY = process.env.GEMINI_API_KEY;
+console.log("GEMINI_API_KEY =", API_KEY);
+
+//
 
 // ex) node server.js --taskIndex=3
 // give specific taskIndex number - 2
@@ -170,7 +181,7 @@ wss_system.on('connection', (ws) => {
   // Notify all clients about the number of connected players
   broadcast({ type: 'playerCount', count: gameState.players.length });
 
-  ws.on('message', (message) => {
+  ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message);
 
@@ -189,41 +200,33 @@ wss_system.on('connection', (ws) => {
       if (data.type === 'reportIssue') {
         checkReport_count++;
         checkReport.push(data);
-        if (checkReport_count === 3) {
-          checkReport_count = 0;
-
+        
+        if (checkReport_count%3 === 0) {
           const messages = checkReport.map(r => r.message);
+          
+          console.log(messages);
+          console.log(messages[checkReport_count-3], messages[checkReport_count-2], messages[checkReport_count-1]);
 
-          // 出現回数をカウント
-          const counts = {};
-          for (const msg of messages) {
-            counts[msg] = (counts[msg] || 0) + 1;
+          let result = await isSameMeaning(messages[checkReport_count-3], messages[checkReport_count-2], messages[checkReport_count-1]);
+          
+          if (['YES', 'NO', '1', '2', '3'].includes(result)) {
+            console.log('内容の一致判定:', result);
+          } else {
+            console.log('不明な応答またはエラー:', result);
           }
+          
 
-          const uniqueMessages = Object.keys(counts);
-
-          if (uniqueMessages.length === 1) {
-            // 全員一致 → 何もしない（空白）
-            console.log(" 全員一致（空白）");
+          if(result === 'YES'){
+            console.log(" 全員一致");
             broadcast({ 
               type: 'clickReport',
               flag: 1
             });
-          } else if (uniqueMessages.length === 2) {
-            // 2人 vs 1人 → 誰が違ったのか表示
-            const diffMessage = uniqueMessages.find(msg => counts[msg] === 1);
-            const diffPerson = checkReport.find(r => r.message === diffMessage);
+            return;
+          }
 
-            console.log(`${diffPerson.name} さんだけ異なる報告です`);
-            
-            broadcast({
-              type: 'clickReport',
-              flag: 0,
-              message: `${diffPerson.name} さんだけ異なる報告です`              
-            });
-
-          } else {
-            // 全員バラバラ
+          if(result === 'NO'){
+             // 全員バラバラ
             console.log("全員報告がバラバラです");
 
             broadcast({
@@ -231,11 +234,22 @@ wss_system.on('connection', (ws) => {
               flag: 0,
               message: "全員報告がバラバラです"
             });
+            return;
           }
 
-          // レポート内容を初期化
-          checkReport = [];
-
+          // 2人 vs 1人 → 誰が違ったのか表示
+          result = Number(result);
+          console.log(checkReport_count);
+          console.log(result);
+          console.log(checkReport_count + result - 3);
+          const diffPerson = checkReport.find(r => r.message === messages[checkReport_count + result - 4]);
+          console.log(`${diffPerson.name} さんだけ異なる報告です`);
+            
+          broadcast({
+            type: 'clickReport',
+            flag: 0,
+            message: `${diffPerson.name} さんだけ異なる報告です`              
+          });
         } else {
           broadcast({ type: 'clickReport' });
         }
@@ -244,6 +258,10 @@ wss_system.on('connection', (ws) => {
 
       if(data.type === 'cancelReport'){
         checkReport_count--;
+        const index = checkReport.findIndex(m => m.id === data.id);
+         if (index !== -1) {
+           checkReport.splice(index, 1); // 特定の要素を削除
+         }
         console.log("checkReport_count = " + checkReport_count);
         broadcast({ type: 'cancelReport' });
       }
@@ -381,9 +399,60 @@ function broadcast(data) {
   });
 }
 
+async function isSameMeaning(text1, text2, text3) {
+  const prompt = `
+    次の3つの文が、文体や表現が異なっていても「伝えようとしている意味が同じ」かどうかを判断してください。
+    同じ意味かどうかを柔軟に考え、以下のルールに従って日本語で1語のみ出力してください。
+
+    【出力ルール】
+    ・3つすべてが伝えようとしている意味が同じの場合 → YES
+    ・すべて伝えようとしている意味が異なる場合 → NO
+    ・文1だけ伝えようとしている意味が異なる場合 → 1
+    ・文2だけ伝えようとしている意味が異なる場合 → 2
+    ・文3だけ伝えようとしている意味が異なる場合 → 3
+
+    【例】
+    文1: 今日は雨が降っているので傘を持っていこう。
+    文2: 外は雨が降っています。傘を持って行ったほうがいいです。
+    文3: 昨日は晴れていたので散歩した。
+    → 出力：3
+
+    【判定対象】
+    文1: ${text1}
+    文2: ${text2}
+    文3: ${text3}
+
+    必ず上記のルールに従って、日本語で「YES」「NO」「1」「2」「3」のいずれか1つだけ出力してください。
+
+    `;
+
+  try {
+    const response = await axios.post(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + API_KEY,
+      {
+        contents: [
+          {
+            parts: [{ text: prompt }]
+          }
+        ]
+      }
+    );
+
+    const result = response.data.candidates[0].content.parts[0].text.trim();
+    console.log('判定結果:', result);  
+
+    return result;  // → YES / NO / 1 / 2 / 3 のいずれか
+  } catch (error) {
+    console.error('API Error:', error.response?.data || error.message);
+    return 'ERROR';
+  }
+}
+
+
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`WebSocket server is also available at ws://localhost:${PORT}`);
 });
+
 

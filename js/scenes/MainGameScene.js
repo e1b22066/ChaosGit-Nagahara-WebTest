@@ -9,6 +9,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.clickReport_count = 0;
         this.clickReport_flag = 0;
         this.finishReport_flag = 0;
+        this.activeRpt = "null";
     }
 
     init(data) {
@@ -580,7 +581,10 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             }
 
             if(this.clickReport_flag === 1 && this.finishReport_flag === 1){
-                const message = JSON.stringify({ type: 'cancelReport' });
+                const message = JSON.stringify({ 
+                    type: 'cancelReport', 
+                    id: this.activeRpt
+                });
                 this.clickReport_flag = 0;
                 this.finishReport_flag = 0;
                 this.socket.send(message);
@@ -639,6 +643,9 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             name: this.name,
             message: document.getElementById('checkMsgInput').value
         };
+
+        this.activeRpt = json.id;
+
         //メッセージ送信
         console.log("メッセージ送信");
         this.socket.send(JSON.stringify(json));  
