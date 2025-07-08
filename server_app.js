@@ -31,33 +31,46 @@ app.use(cors({ origin: 'http://127.0.0.1:5501' }));
 
 // Create an HTTP server using the Express app
 const server = http.createServer(app);
-// Create an HTTP server 
-//const server2 = http.createServer();
 
 // Create a WebSocket server using the HTTP server
 const wss_system = new WebSocketServer({ server }); //8080
 const wss_chat = new WebSocketServer({ port:8081 });
 
-//const io = new SocketIOServer({ server });
-
-
-// Create a Socket.io server using the HTTP server
-//const io	= new SocketIOServer(server2, {
-//  cors: {
-//    origin: '*'
-//  }  
-//});
-
 //global variable
 
 let checkReport_count = 0;
 
-let checkReport = [];
+// 障害発生時の障害内容
+//   格納内容{
+//     id: this.generateId(),
+//     type: "reportIssue",
+//     name: this.name,
+//     message: document.getElementById('checkMsgInput').value
+//    }    
+let checkReport = [];    
 
-let globalMessages = []; // サーバーに届いたすべてのメッセージを保持
+// サーバーに届いたすべてのチャットメッセージ
+//   格納内容{
+//     id: this.generateId(),
+//     type: "chat",
+//     name: this.name,
+//     message: document.getElementById('msgInput').value,
+//     time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
+//   }  
+let globalMessages = []; 
 
-let playerName = [];
+//　参加した実験者の名前
+let playerName = [];    
 
+//  投票内容
+//    格納内容{
+//      id: this.generateId(),
+//      type: "vote",
+//      name: this.name,
+//      message: document.getElementById('msgInput').value,
+//      time: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`,
+//      voteCount: 0
+//     }
 let voteMessage = [];
 
 let gameState = {
@@ -215,7 +228,6 @@ wss_system.on('connection', (ws) => {
             console.log('不明な応答またはエラー:', result);
           }
           
-
           if(result === 'YES'){
             console.log(" 全員一致");
             broadcast({ 
@@ -253,14 +265,13 @@ wss_system.on('connection', (ws) => {
         } else {
           broadcast({ type: 'clickReport' });
         }
-        //broadcast({ type: 'enterDiscussion' });
       }
 
       if(data.type === 'cancelReport'){
         checkReport_count--;
         const index = checkReport.findIndex(m => m.id === data.id);
          if (index !== -1) {
-           checkReport.splice(index, 1); // 特定の要素を削除
+           checkReport.splice(index, 1); 
          }
         console.log("checkReport_count = " + checkReport_count);
         broadcast({ type: 'cancelReport' });
@@ -296,7 +307,7 @@ wss_chat.on('connection', (ws) => {
       if(json.type === "voteCancel"){
          const index = voteMessage.findIndex(m => m.id === json.activePps);
          if (index !== -1) {
-           voteMessage.splice(index, 1); // 特定の要素を削除
+           voteMessage.splice(index, 1);
          }
 
          const voteCancel = {
@@ -448,11 +459,8 @@ async function isSameMeaning(text1, text2, text3) {
   }
 }
 
-
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`WebSocket server is also available at ws://localhost:${PORT}`);
 });
-
-

@@ -75,5 +75,4 @@ export class CooperationTaskScene extends Phaser.Scene {
             this.scene.start('MainGameScene'); 
         });
 }
-
 }

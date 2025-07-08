@@ -20,7 +20,6 @@ export class TitleScene extends Phaser.Scene {
        
         this.ws = new WebSocket('ws://localhost:8081');
 
-        
         this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 100, 'ChaosGit', { fontSize: '32px', fill: '#fff' })
             .setOrigin(0.5);
 
@@ -91,6 +90,4 @@ export class TitleScene extends Phaser.Scene {
                 });
             });
     }
-
 }
-

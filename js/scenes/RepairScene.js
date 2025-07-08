@@ -34,6 +34,4 @@ export class RepairScene extends Phaser.Scene {
                 this.scene.start('MainGameScene');
             });
     }
-
-
 }
