@@ -392,10 +392,50 @@ export class DiscussionScene extends Phaser.Scene {
 
                         //banner.textContent = `💡 「${name}」のメッセージが選ばれました！\n"${message}"`;
 
-                        // 3秒後に非表示
-                        //setTimeout(() => {
-                        //    wrapper.remove(); // or solutionDiv.style.display = 'none';
-                        //}, 3000);
+                        //5秒後にMainSecenに移動
+                        setTimeout(() => {
+                            //wrapper.remove(); // or solutionDiv.style.display = 'none';
+                            document.querySelectorAll('.solutionDiv').forEach(el => {
+                                el.style.display = 'none';
+                            });
+                            if(this.votingDiv){
+                                this.votingDiv.innerHTML = '';
+                            }
+                            this.solutionHTML2 = `
+                                <div id="someoneClickReport" style="
+                                    display: none;
+                                    position: fixed;
+                                    top: 20%;
+                                    left: 50%;
+                                    transform: translate(-50%, -50%);
+                                    z-index: 9999;
+                                    background: rgba(0, 0, 0, 0.85);
+                                    color: white;
+                                    padding: 30px 50px;
+                                    font-size: 16px;
+                                    border-radius: 10px;
+                                    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                                    text-align: center;
+                                ">
+                                </div>
+                        `;
+
+                        wrapper.innerHTML = this.solutionHTML2;
+                        document.body.appendChild(wrapper);
+
+                        this.solutionDiv2 = document.getElementById('someoneClickReport');
+
+                        this.solutionDiv2.innerHTML = `修正方法は、${message}<br>
+                                                    修正者は、${json.taskName}`;
+                        this.solutionDiv2.style.display = 'block';
+
+                        this.scene.start('MainGameScene',{
+                            socket : this.socket,
+                            ws : this.ws,
+                            name : this.name,
+                            solutionDiv2: this.solutionDiv2
+                        })
+                        }, 5000);
                     }
                     break;
             }

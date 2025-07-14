@@ -16,6 +16,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.socket = data.socket;
         this.ws = data.ws;
         this.name = data.name;
+        this.solutionDiv2 = data.solutionDiv2;
     }
 
     preload() {                                   //画像・音声の読み込み
@@ -71,6 +72,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             const data = JSON.parse(event.data);
 
             if (data.type === 'syncState') {
+                this.solutionDiv2.style.display = 'none';
                 this.updateGameState(data.state);
                 this.moveToNextTask();
             }
