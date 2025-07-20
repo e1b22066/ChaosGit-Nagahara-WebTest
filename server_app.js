@@ -42,6 +42,8 @@ let checkReport_count = 0;
 let correct_count = 0;
 let correct_name = [];
 let discorrect_name = [];
+let correct_flag = 0;
+let cause_flag = 0;
 
 // 障害発生時の障害内容
 //   格納内容{
@@ -210,28 +212,53 @@ wss_system.on('connection', (ws) => {
       if (data.type === 'clearTask') {
         advanceTask();
         broadcastGameState();
+        correct_flag = 0;
+        cause_flag = 1;
       }
 
       // Trigger discussion phase
       if (data.type === 'reportIssue') {
         checkReport_count++;
-        checkReport.push(data);
-        const correct = "ありがとうございました。"; 
+        checkReport.push(data); 
         const messages = checkReport.map(r => r.message);
+        let correct = "";
         
         console.log(messages);
-        /*
-        if(gameState.currentTaskIndex >= 100){
-          //task分け
-          
+
+        const correctMap = [
+          {description: "思い当たらないファイルがGitHubにある", }, // task7
+          {description: "思い当たらないコミットが履歴にある", },   // task10
+          {description: "Monster.javaの編集内容が衝突してる", }      // task11
+        ];
+        
+        if(gameState.currentTaskIndex < 7){
+           correct = correctMap[0].description;
+           console.log("index:" + gameState.currentTaskIndex + "task7:" + correct);
+        }else if(gameState.currentTaskIndex < 10){
+           correct = correctMap[1].description; 
+           console.log("index:" + gameState.currentTaskIndex + "task10:" + correct);
+        }else{
+           correct = correctMap[2].description;
+           console.log("index:" + gameState.currentTaskIndex + "task11:" + correct);
         }
-          */
 
         let result = await isCorrectMeaning(messages[checkReport_count-1], correct);
         if(result === 'YES'){
           console.log("一致");
+          correct_flag = 1;
+          if(correct_count === 3){
+            correct_count = 0;
+          }
           correct_count++;
           correct_name.push(checkReport.find(r => r.message === messages[checkReport_count - 1]));
+          if(cause_flag === 1 && correct_count === 3){
+            broadcast({ 
+              type: 'reportCause',
+              correct_count: correct_count,
+              correct_flag: correct_flag 
+            });
+            return;
+          }
           broadcast({ 
             type: 'clickReport',
             flag: 0,
@@ -249,6 +276,46 @@ wss_system.on('connection', (ws) => {
             correct_count: correct_count
           });
         }
+      }
+
+      if(data.type === 'reportCause'){   //障害内容わからない
+        console.log("障害内容不明");
+        cause_flag = 1;
+        if(correct_count === 3){
+            correct_count = 0;
+          }
+          correct_count++;
+        broadcast({ 
+          type: 'reportCause',
+          correct_count: correct_count,
+          correct_flag: correct_flag 
+        });
+      }
+
+      if(data.type === 'reportPlace'){   //障害場所わからない
+        let place = "";
+        console.log("障害場所不明");
+        const placeMap = [
+          {description: "GitHubをよくみてください", }, // task7
+          {description: "コミットの履歴をよく見てください", },   // task10
+          {description: "gitHubのMonster.javaをみてください", }      // task11
+        ];
+        
+        if(gameState.currentTaskIndex < 7){
+           place = placeMap[0].description;
+           console.log("index:" + gameState.currentTaskIndex + "task7:" + place);
+        }else if(gameState.currentTaskIndex < 10){
+           place = placeMap[1].description; 
+           console.log("index:" + gameState.currentTaskIndex + "task10:" + place);
+        }else{
+           place = placeMap[2].description;
+           console.log("index:" + gameState.currentTaskIndex + "task11:" + place);
+        }
+        broadcast({ 
+          type:"reportPlace",
+          name: data.name,
+          place: place
+        });
       }
 
       if(data.type === 'cancelReport'){
@@ -392,55 +459,6 @@ function broadcast(data) {
   gameState.players.forEach((player) => {
     player.send(JSON.stringify(data));
   });
-}
-
-async function isSameMeaning(text1, text2, text3) {
-  const prompt = `
-    次の3つの文が、文体や表現が異なっていても「伝えようとしている意味が同じ」かどうかを判断してください。
-    同じ意味かどうかを柔軟に考え、以下のルールに従って日本語で1語のみ出力してください。
-
-    【出力ルール】
-    ・3つすべてが伝えようとしている意味が同じの場合 → YES
-    ・すべて伝えようとしている意味が異なる場合 → NO
-    ・文1だけ伝えようとしている意味が異なる場合 → 1
-    ・文2だけ伝えようとしている意味が異なる場合 → 2
-    ・文3だけ伝えようとしている意味が異なる場合 → 3
-
-    【例】
-    文1: 今日は雨が降っているので傘を持っていこう。
-    文2: 外は雨が降っています。傘を持って行ったほうがいいです。
-    文3: 昨日は晴れていたので散歩した。
-    → 出力：3
-
-    【判定対象】
-    文1: ${text1}
-    文2: ${text2}
-    文3: ${text3}
-
-    必ず上記のルールに従って、日本語で「YES」「NO」「1」「2」「3」のいずれか1つだけ出力してください。
-
-    `;
-
-  try {
-    const response = await axios.post(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + API_KEY,
-      {
-        contents: [
-          {
-            parts: [{ text: prompt }]
-          }
-        ]
-      }
-    );
-
-    const result = response.data.candidates[0].content.parts[0].text.trim();
-    console.log('判定結果:', result);  
-
-    return result;  // → YES / NO / 1 / 2 / 3 のいずれか
-  } catch (error) {
-    console.error('API Error:', error.response?.data || error.message);
-    return 'ERROR';
-  }
 }
 
 async function isCorrectMeaning(text1, text2) {
