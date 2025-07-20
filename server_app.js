@@ -39,6 +39,9 @@ const wss_chat = new WebSocketServer({ port:8081 });
 //global variable
 
 let checkReport_count = 0;
+let correct_count = 0;
+let correct_name = [];
+let discorrect_name = [];
 
 // 障害発生時の障害内容
 //   格納内容{
@@ -213,57 +216,38 @@ wss_system.on('connection', (ws) => {
       if (data.type === 'reportIssue') {
         checkReport_count++;
         checkReport.push(data);
+        const correct = "ありがとうございました。"; 
+        const messages = checkReport.map(r => r.message);
         
-        if (checkReport_count%3 === 0) {
-          const messages = checkReport.map(r => r.message);
+        console.log(messages);
+        /*
+        if(gameState.currentTaskIndex >= 100){
+          //task分け
           
-          console.log(messages);
-          console.log(messages[checkReport_count-3], messages[checkReport_count-2], messages[checkReport_count-1]);
+        }
+          */
 
-          let result = await isSameMeaning(messages[checkReport_count-3], messages[checkReport_count-2], messages[checkReport_count-1]);
-          
-          if (['YES', 'NO', '1', '2', '3'].includes(result)) {
-            console.log('内容の一致判定:', result);
-          } else {
-            console.log('不明な応答またはエラー:', result);
-          }
-          
-          if(result === 'YES'){
-            console.log(" 全員一致");
-            broadcast({ 
-              type: 'clickReport',
-              flag: 1
-            });
-            return;
-          }
-
-          if(result === 'NO'){
-             // 全員バラバラ
-            console.log("全員報告がバラバラです");
-
-            broadcast({
-              type: 'clickReport',
-              flag: 0,
-              message: "全員報告がバラバラです"
-            });
-            return;
-          }
-
-          // 2人 vs 1人 → 誰が違ったのか表示
-          result = Number(result);
-          console.log(checkReport_count);
-          console.log(result);
-          console.log(checkReport_count + result - 3);
-          const diffPerson = checkReport.find(r => r.message === messages[checkReport_count + result - 4]);
-          console.log(`${diffPerson.name} さんだけ異なる報告です`);
-            
-          broadcast({
+        let result = await isCorrectMeaning(messages[checkReport_count-1], correct);
+        if(result === 'YES'){
+          console.log("一致");
+          correct_count++;
+          correct_name.push(checkReport.find(r => r.message === messages[checkReport_count - 1]));
+          broadcast({ 
             type: 'clickReport',
             flag: 0,
-            message: `${diffPerson.name} さんだけ異なる報告です`              
+            name: data.name,
+            correct_count: correct_count
           });
-        } else {
-          broadcast({ type: 'clickReport' });
+        }
+        else if(result === 'NO'){
+          console.log("不一致");
+          correct_name.push(checkReport.find(r => r.message === messages[checkReport_count - 1]));
+          broadcast({ 
+            type: 'clickReport',
+            flag: 1,
+            name: data.name,
+            correct_count: correct_count
+          });
         }
       }
 
@@ -453,6 +437,49 @@ async function isSameMeaning(text1, text2, text3) {
     console.log('判定結果:', result);  
 
     return result;  // → YES / NO / 1 / 2 / 3 のいずれか
+  } catch (error) {
+    console.error('API Error:', error.response?.data || error.message);
+    return 'ERROR';
+  }
+}
+
+async function isCorrectMeaning(text1, text2) {
+  const prompt = `
+    次の3つの文が、文体や表現が異なっていても「伝えようとしている意味が同じ」かどうかを判断してください。
+    同じ意味かどうかを柔軟に考え、以下のルールに従って日本語で1語のみ出力してください。
+
+    【出力ルール】
+    ・伝えようとしている意味が同じの場合 → YES
+    ・伝えようとしている意味が異なる場合 → NO
+
+    【例】
+    文1: 今日は雨が降っているので傘を持っていこう。
+    文2: 外は雨が降っています。傘を持って行ったほうがいいです。
+    → 出力：YES
+
+    【判定対象】
+    文1: ${text1}
+    文2: ${text2}
+
+    「YES」「NO」
+    `;
+
+  try {
+    const response = await axios.post(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + API_KEY,
+      {
+        contents: [
+          {
+            parts: [{ text: prompt }]
+          }
+        ]
+      }
+    );
+
+    const result = response.data.candidates[0].content.parts[0].text.trim();
+    console.log('判定結果:', result);  
+
+    return result; 
   } catch (error) {
     console.error('API Error:', error.response?.data || error.message);
     return 'ERROR';

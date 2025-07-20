@@ -10,6 +10,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.clickReport_flag = 0;
         this.finishReport_flag = 0;
         this.activeRpt = "null";
+        this.wait_flag = 0;
     }
 
     init(data) {
@@ -472,53 +473,67 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                         document.body.appendChild(wrapper);
 
                         const clickReportDiv = document.getElementById('someoneClickReport');
-
+                        
                         if(data.type === 'clickReport'){
-                            this.clickReport_count++;
+                            this.clickReport_count = data.correct_count;
                         }else if(data.type === 'cancelReport'){
                             this.clickReport_count--;
                         }
 
-                        clickReportDiv.innerHTML = `💡「${this.clickReport_count}人がSabotageの邪魔を見つけました」<br>
+                        if(data.name === this.name || this.wait_flag === 1){
+                            if(clickReportDiv.style.display){
+                                clickReportDiv.style.display = '';
+                            }
+                            if(!data.flag || this.wait_flag === 1){
+                                clickReportDiv.innerHTML = `障害内容正解！<br>
+                                                            投票開始まで後${3-this.clickReport_count}人<br>
+                                                            少々お待ちください。`;
+                                clickReportDiv.style.display = 'block';
+                                this.wait_flag = 1;
+                            }
+                            if(data.flag && this.wait_flag === 0){
+                                clickReportDiv.innerHTML = `障害内容不正解！`;
+                                clickReportDiv.style.display = 'block';
+                                this.clickReport_flag = 0;
+                                this.finishReport_flag = 0;
+                                // 3秒後に非表示にする
+                                setTimeout(() => {
+                                    clickReportDiv.style.display = 'none';
+                                    if(this.clickReport_count !== 0){
+                                        clickReportDiv.innerHTML = `💡「${this.clickReport_count}人がSabotageの邪魔を見つけました」<br>
                                                         投票開始まで後${3-this.clickReport_count}人`;
-                        clickReportDiv.style.display = 'block';
-
-                        if(this.clickReport_count === 0){
-                            clickReportDiv.style.display = 'none';
+                                        clickReportDiv.style.display = 'block';
+                                    }
+                                }, 3000);
+                            }
+                        }else{
+                            if(this.clickReport_count !== 0){
+                                clickReportDiv.innerHTML = `💡「${this.clickReport_count}人がSabotageの邪魔を見つけました」<br>
+                                                        投票開始まで後${3-this.clickReport_count}人`;
+                                clickReportDiv.style.display = 'block';
+                            }
                         }
 
                         if(this.clickReport_count === 3){
                             clickReportDiv.style.display = 'none';
-                            if(data.flag){   //全員一致で画面遷移
-                                this.scene.start('DiscussionScene', { 
-                                socket: this.socket,
-                                ws: this.ws,
-                                name: this.name,
-                                addChatUI: this.addChatUI.bind(this),
-                                sendMessage:this.sendMessage.bind(this),
-                                initChatSocket: this.initChatSocket.bind(this),
-                                createDiv: this.createDiv.bind(this),
-                                createMessage: this.createMessage.bind(this),
-                                resetHTMLList: this.resetHTMLList.bind(this),
-                                generateId: this.generateId.bind(this)
-                                });
-                                return;
-                            }
+                            this.scene.start('DiscussionScene', { 
+                            socket: this.socket,
+                            ws: this.ws,
+                            name: this.name,
+                            addChatUI: this.addChatUI.bind(this),
+                            sendMessage:this.sendMessage.bind(this),
+                            initChatSocket: this.initChatSocket.bind(this),
+                            createDiv: this.createDiv.bind(this),
+                            createMessage: this.createMessage.bind(this),
+                            resetHTMLList: this.resetHTMLList.bind(this),
+                            generateId: this.generateId.bind(this)
+                            });
 
-                            if(!data.flag){   //全員一致していなく画面遷移しない場合
-                               clickReportDiv.innerHTML = ``;
-                               clickReportDiv.innerHTML = `障害の内容にメンバー間で相違があります。」<br>
-                                                        ${data.message}`;
-                               clickReportDiv.style.display = 'block';
-                               this.clickReport_count = 0;
-                               this.clickReport_flag = 0;
-                               this.finishReport_flag = 0;
-
-                               // 5秒後に非表示にする
-                               setTimeout(() => {
-                                  clickReportDiv.style.display = 'none';
-                               }, 5000);
-                            }
+                        // 5秒後に非表示にする
+                        setTimeout(() => {
+                            clickReportDiv.style.display = 'none';
+                        }, 5000);
+                        
                         }
     }
 
@@ -736,6 +751,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.clickReport_count = 0;
         this.clickReport_flag = 0;
         this.finishReport_flag = 0;
+        this.wait_flag = 0;
     }
 
     generateId() {
