@@ -540,6 +540,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                         }
 
                         if(this.clickReport_count === 3 && data.type !== "reportCause"){
+                            this.openMeet();
                             this.clickReportDiv.style.display = 'none';
                             this.scene.start('DiscussionScene', { 
                             socket: this.socket,
