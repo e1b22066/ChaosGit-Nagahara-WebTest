@@ -10,6 +10,8 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.clickReport_flag = 0;
         this.finishReport_flag = 0;
         this.activeRpt = "null";
+        this.wait_flag = 0;
+        this.cause_count = 0;
     }
 
     init(data) {
@@ -72,7 +74,9 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             const data = JSON.parse(event.data);
 
             if (data.type === 'syncState') {
-                this.solutionDiv2.style.display = 'none';
+                if(this.solutionDiv2){
+                    this.solutionDiv2.style.display = 'none';
+                }
                 this.updateGameState(data.state);
                 this.moveToNextTask();
             }
@@ -103,6 +107,17 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             if(data.type == 'cancelReport'){
                 this.someoneClickReport(data);
             }
+
+            if(data.type == 'reportCause'){
+                this.someoneClickReport(data);
+            }
+
+            if(data.type == 'reportPlace'){
+                if(data.name === this.name){
+                    this.tellPlace(data);
+                }
+            }
+
             this.isSocket = true;
         });
     }
@@ -471,55 +486,125 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                         wrapper.innerHTML = clickReportHTML;
                         document.body.appendChild(wrapper);
 
-                        const clickReportDiv = document.getElementById('someoneClickReport');
-
+                        this.clickReportDiv = document.getElementById('someoneClickReport');
+                        
                         if(data.type === 'clickReport'){
-                            this.clickReport_count++;
+                            this.clickReport_count = data.correct_count;
                         }else if(data.type === 'cancelReport'){
                             this.clickReport_count--;
+                        }else if(data.type === 'reportCause'){
+                            this.cause_count++;
+                            this.clickReport_count = data.correct_count;
                         }
 
-                        clickReportDiv.innerHTML = `💡「${this.clickReport_count}人がSabotageの邪魔を見つけました」<br>
+                        console.log("data.type =" + data.type);
+                        console.log("this.clickReport_count = " + this.clickReport_count);
+                        console.log("this.cause_count = " + this.cause_count);
+                        if(data.type !== 'reportCause' || this.wait_flag === 1){
+                            if(data.name === this.name || this.wait_flag === 1){
+                                if(this.clickReportDiv.style.display){
+                                    this.clickReportDiv.style.display = '';
+                                }
+                                if(!data.flag || this.wait_flag === 1){
+                                    this.clickReportDiv.innerHTML = `障害内容正解！<br>
+                                                                ${this.clickReport_count-this.cause_count}人が原因特定
+                                                                ${this.cause_count}人が原因不特定<br>
+                                                                投票開始まで後${3-this.clickReport_count}人<br>
+                                                                少々お待ちください。`;
+                                    this.clickReportDiv.style.display = 'block';
+                                    this.wait_flag = 1;
+                                }
+                                if(data.flag && this.wait_flag === 0){
+                                    this.clickReportDiv.innerHTML = `障害内容不正解！`;
+                                    this.clickReportDiv.style.display = 'block';
+                                    this.clickReport_flag = 0;
+                                    this.finishReport_flag = 0;
+                                    // 3秒後に非表示にする
+                                    setTimeout(() => {
+                                        this.clickReportDiv.style.display = 'none';
+                                        if(this.clickReport_count !== 0){
+                                                this.clickReportDiv.innerHTML = `💡「${this.clickReport_count-this.cause_count}人が障害を発見、原因を把握しました」<br>
+                                                                        「${this.cause_count}人が障害を発見したが、原因を把握できず諦めました」<br>
+                                                                        投票開始まで後${3-this.clickReport_count}人`;
+                                                this.clickReportDiv.style.display = 'block';
+                                        }
+                                    }, 3000);
+                                }
+                            }
+                        }
+                        if(this.clickReport_count !== 0 && this.wait_flag !== 1){
+                                this.clickReportDiv.innerHTML = `💡「${this.clickReport_count-this.cause_count}人が障害を発見、原因を把握しました」<br>
+                                                        「${this.cause_count}人が障害を発見したが、原因を把握できず諦めました」<br>
                                                         投票開始まで後${3-this.clickReport_count}人`;
-                        clickReportDiv.style.display = 'block';
-
-                        if(this.clickReport_count === 0){
-                            clickReportDiv.style.display = 'none';
+                                this.clickReportDiv.style.display = 'block';
                         }
 
-                        if(this.clickReport_count === 3){
-                            clickReportDiv.style.display = 'none';
-                            if(data.flag){   //全員一致で画面遷移
-                                this.scene.start('DiscussionScene', { 
-                                socket: this.socket,
-                                ws: this.ws,
-                                name: this.name,
-                                addChatUI: this.addChatUI.bind(this),
-                                sendMessage:this.sendMessage.bind(this),
-                                initChatSocket: this.initChatSocket.bind(this),
-                                createDiv: this.createDiv.bind(this),
-                                createMessage: this.createMessage.bind(this),
-                                resetHTMLList: this.resetHTMLList.bind(this),
-                                generateId: this.generateId.bind(this)
-                                });
-                                return;
-                            }
+                        if(this.clickReport_count === 3 && data.type !== "reportCause"){
+                            this.openMeet();
+                            this.clickReportDiv.style.display = 'none';
+                            this.scene.start('DiscussionScene', { 
+                            socket: this.socket,
+                            ws: this.ws,
+                            name: this.name,
+                            addChatUI: this.addChatUI.bind(this),
+                            sendMessage:this.sendMessage.bind(this),
+                            initChatSocket: this.initChatSocket.bind(this),
+                            createDiv: this.createDiv.bind(this),
+                            createMessage: this.createMessage.bind(this),
+                            resetHTMLList: this.resetHTMLList.bind(this),
+                            generateId: this.generateId.bind(this)
+                            });
 
-                            if(!data.flag){   //全員一致していなく画面遷移しない場合
-                               clickReportDiv.innerHTML = ``;
-                               clickReportDiv.innerHTML = `障害の内容にメンバー間で相違があります。」<br>
-                                                        ${data.message}`;
-                               clickReportDiv.style.display = 'block';
-                               this.clickReport_count = 0;
-                               this.clickReport_flag = 0;
-                               this.finishReport_flag = 0;
-
-                               // 5秒後に非表示にする
-                               setTimeout(() => {
-                                  clickReportDiv.style.display = 'none';
-                               }, 5000);
-                            }
+                        // 5秒後に非表示にする
+                        setTimeout(() => {
+                            this.clickReportDiv.style.display = 'none';
+                        }, 5000);
                         }
+                        if(this.clickReport_count === 3 && data.type === "reportCause"){
+                            this.clickReportDiv.innerHTML = `参加者全員が障害の原因を把握していないため、<br>オンライン会議にて原因の情報共有をしてください<br>
+                                                       <button id="joinMeetingBtn"()">会議に参加する</button>`;
+                            this.clickReportDiv.style.display = 'block';
+
+                            const joinMeetingBtn = document.getElementById("joinMeetingBtn");
+                            if (joinMeetingBtn) {
+                                joinMeetingBtn.addEventListener("click", this.openMeet.bind(this));
+                            } else {
+                                console.warn("joinMeetingBtn が見つかりませんでした");
+                            }
+                            
+                            setTimeout(() => {
+                                const jitsiWindow = window.open("https://meet.jit.si//chaosGit-Test", "_blank");
+                                if (!jitsiWindow) {
+                                    alert("ポップアップブロックを解除してください！");
+                                }
+                            }, 3000);
+                            setTimeout(() => {
+                                this.clickReportDiv.innerHTML = '<button id="votingPhaseBtn"()">投票フェーズに進む</button>';
+
+                                const votingPhaseBtn = document.getElementById("votingPhaseBtn");
+                                if (votingPhaseBtn) {
+                                    votingPhaseBtn.addEventListener("click", this.goVote.bind(this));
+                                } else {
+                                    console.warn("votingPhaseBtn が見つかりませんでした");
+                                }
+                            }, 30000);
+                        }
+    }
+
+    goVote(){
+        this.clickReportDiv.style.display = 'none';
+        this.scene.start('DiscussionScene', { 
+            socket: this.socket,
+            ws: this.ws,
+            name: this.name,
+            addChatUI: this.addChatUI.bind(this),
+            sendMessage:this.sendMessage.bind(this),
+            initChatSocket: this.initChatSocket.bind(this),
+            createDiv: this.createDiv.bind(this),
+            createMessage: this.createMessage.bind(this),
+            resetHTMLList: this.resetHTMLList.bind(this),
+            generateId: this.generateId.bind(this)
+        });
     }
 
     showCmpleteMessage() {
@@ -535,8 +620,6 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
             console.warn('Socket is not open. Cannot send message.');
         }
     }
-    
-    
     
     closeTaskWindow() {
         // タスクウィンドウに表示されているボタンを一緒に削除
@@ -596,6 +679,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         }
     }
 
+    //ここに内容わからないボタン追加（誰か正解した場合）　どこで起きているかもわからないボタン（ボタン）or文章を送る
     checkReport(){
         const checkReportHTML = `
                         <div id="checkReport" style="
@@ -624,6 +708,9 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
                         this.checkReportDiv = document.getElementById('checkReport');
 
                         this.checkReportDiv.innerHTML = `障害の原因は何ですか？<br>
+                                                  また、障害発生場所が分かって、原因がわからない人は、"障害原因不明"<br>
+                                                  障害発生場所もわからない方は、                    "障害場所不明"
+                                                  と入力してください。<br
                                                   <div><input class="msg" type="text" id="checkMsgInput" placeholder="message" /></div>
                                                   <button id="checkSendBtn"()">Send</button>`;
                         this.checkReportDiv.style.display = 'block';
@@ -639,9 +726,16 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     checkSend(){
         this.checkReportDiv.style.display = 'none';
         this.finishReport_flag = 1;
+        let type = "reportIssue"
+        if(document.getElementById('checkMsgInput').value === "障害原因不明"){
+            type = "reportCause"
+        }else if(document.getElementById('checkMsgInput').value === "障害場所不明"){
+            type = "reportPlace"
+        }
+
         const json = {
             id: this.generateId(),
-            type: "reportIssue",
+            type: type,
             name: this.name,
             message: document.getElementById('checkMsgInput').value
         };
@@ -652,6 +746,42 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         console.log("メッセージ送信");
         this.socket.send(JSON.stringify(json));  
         document.getElementById('msgInput').value = '';
+    }
+
+    tellPlace(data){
+        const tellPlaceHTML = `
+                        <div id="tellPlace" style="
+                            display: none;
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            z-index: 9999;
+                            background: rgba(0, 0, 0, 0.85);
+                            color: white;
+                            padding: 30px 50px;
+                            font-size: 16px;
+                            border-radius: 10px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                            text-align: center;
+                        ">
+                        </div>
+                        `;
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = tellPlaceHTML;
+                        document.body.appendChild(wrapper);
+
+                        this.tellPlaceDiv = document.getElementById('tellPlace');
+
+                        this.tellPlaceDiv.innerHTML = "ヒント: " + data.place;
+                        this.tellPlaceDiv.style.display = 'block';
+
+                        this.clickReport_flag = 0;
+                        this.finishReport_flag = 0;
+
+                        setTimeout(() => {
+                            this.tellPlaceDiv.style.display = 'none';
+                        }, 5000);
     }
 
     createPlayer() {
@@ -736,6 +866,8 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.clickReport_count = 0;
         this.clickReport_flag = 0;
         this.finishReport_flag = 0;
+        this.wait_flag = 0;
+        this.cause_count = 0;
     }
 
     generateId() {
