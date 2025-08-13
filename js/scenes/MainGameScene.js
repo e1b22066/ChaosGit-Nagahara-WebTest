@@ -1,3 +1,5 @@
+//import { response } from "express";
+
 export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     constructor() {
         super({ key: 'MainGameScene' });          //このSceneの名前
@@ -609,7 +611,35 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
 
     showCmpleteMessage() {
         this.messageText.setText('すべてのタスクを完了しました！お疲れ様でした！');
+        this.sendTaskCompletion();
     }
+
+    sendTaskCompletion = async () => {
+        try{
+            /* 
+            **************************************************************
+                実験参加者の皆様へ
+            　　この下のアドレスを指定されたものに書き換えてください
+                例： fetch('http://192.168.xx.xx:8080/complete-task', {
+            **************************************************************
+            */
+            const response = await fetch('http://localhost:8080/complete-task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            //body: JSON.stringify({ type: currentTask.type }) // Use the type from the current task
+            })
+
+            if(response.redirected){
+                window.location.href = response.url;
+            }else{
+                console.log('振り返りページに移動できませんでした: ');
+            }
+        }catch(error){
+            console.error('リクエスト送信エラー:', error);
+        }
+    };
 
     clearTask() {
         const message = JSON.stringify({ type: 'clearTask' });

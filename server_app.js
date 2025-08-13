@@ -191,6 +191,20 @@ app.post('/check-task', (req, res) => {
   });
 });
 
+//終了時に表を出力している画面に遷移
+app.post('/complete-task', (req, res) => {
+  /* 
+  **************************************************************
+      実験参加者の皆様へ
+  　　この下のアドレスを指定されたものに書き換えてください
+      例： const angularAppUrl = "http://192.168.xx.xx:4200/review"
+  **************************************************************
+  */
+  const angularAppUrl = "http://localhost:4200/review"
+  res.redirect(angularAppUrl);
+});
+
+
 //Game WebSocket
 wss_system.on('connection', (ws) => {
   gameState.players.push(ws);
