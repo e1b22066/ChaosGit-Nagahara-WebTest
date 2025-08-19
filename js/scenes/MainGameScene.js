@@ -14,6 +14,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
         this.activeRpt = "null";
         this.wait_flag = 0;
         this.cause_count = 0;
+        this.check_count = 0;
     }
 
     init(data) {
@@ -420,6 +421,7 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     }
 
     checkTask() {
+        this.check_count++;
         const currentTask = this.tasks[this.currentTaskIndex];
         
         if (!currentTask) {
@@ -642,7 +644,10 @@ export class MainGameScene extends Phaser.Scene { //JavaScriptのライブラリ
     };
 
     clearTask() {
-        const message = JSON.stringify({ type: 'clearTask' });
+        const message = JSON.stringify({ type: 'clearTask', name: this.name, task_count: this.check_count});
+
+        this.check_count = 0;
+
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.showTaskClearMessage();
             this.socket.send(message);

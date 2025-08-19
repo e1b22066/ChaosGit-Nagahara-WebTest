@@ -45,11 +45,13 @@ export class Sample implements OnInit {
       console.log('取得したデータ:', this.rowData);
       
       this.columnDefs = [
-        { field: 'who', headerName: '誰が' },
-        { field: 'task', headerName: 'どのタスク' },
-        { field: 'incident', headerName: 'トラブル対応' }
+        { field: 'No', headerName: 'task' },
+        { field: 'taskContent', headerName: '内容', wrapText: true, autoHeight: true },
+        { field: 'who', headerName: '担当者' },
+        {field: 'task_count', headerName: 'チェック回数(本タスククリアにかかった回数)'},
+        {field: 'chat_count', headerName: 'チャット回数'}
       ];
-      
+
       this.defaultColDef = {
         flex: 1,
         filter: true,

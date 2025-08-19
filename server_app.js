@@ -65,6 +65,7 @@ let correct_name = [];
 let discorrect_name = [];
 let correct_flag = 0;
 let cause_flag = 0;
+let chat_count = 0;
 
 // 障害発生時の障害内容
 //   格納内容{
@@ -104,14 +105,8 @@ let gameState = {
   players: [],
 };
 
-//振り返りダミーデータ
-const getReviewData = () => {
-  return [
-    {who: '田中', task: 'ログイン機能の修正', incident: '最初に発見'},
-    {who: '鈴木', task: 'データ連携', incident: '修正案を提案'},
-    {who: '佐藤', task: 'UIデザイン', incident: '修正案を採択'}
-  ]
-};
+//振り返りデータ
+let getTaskReviewData = []; 
 
 //生成AI周り
 
@@ -236,7 +231,7 @@ app.post('/complete-task', (req, res) => {
 
 //振り返りデータを提供するAPIエンドポイント
 app.get('/api/review-data', (req, res) => {
-    const data = getReviewData();
+    const data = getTaskReviewData;
     res.json(data);
 });
 
@@ -259,10 +254,32 @@ wss_system.on('connection', (ws) => {
 
       // Synchronize task progress
       if (data.type === 'clearTask') {
-        advanceTask();
+        const tasks = [
+            {description:  '\nターミナルにコマンドを入力して現在のディレクトリに新規のGitリポジトリを作成してください．\nここで作成したGitリポジトリをローカルリポジトリとして開発を進めます．'},
+            {description:  '\nGitで作業を記録するために，指定の名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．\n名前：user\nメールアドレス：user@example.com'},
+            {description: '\nMain.javaというファイルを作成し，コミットメッセージとともにコミットを作成してください．\nコミットにはコミットメッセージが必ず必要です．\nMain.javaには何も書き込まなくても構いません．\npushはまだしないでください．'},
+            {description:  '\nGitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n'},
+            {description: '\nリモートリポジトリとローカルリポジトリが連携できるように，ローカルリポジトリに\nリモートリポジトリを登録してください．\nGitHub上でリモートリポジトリのURLを選択する際に\nHTTPSではなくSSH用のアドレスを選んで登録してください．'}, // 被験者混乱（リポジトリアクセス権の問題？）
+            {description:  '\n作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートリポジトリへpushしてください．'},
+            {description:  '\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートリポジトリへ\npushしてください．'},
+            {description:  '\n"Hello World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．'},
+            {description:  '\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．'},
+            {description:  '\ngit logコマンドで今までのコミットが正しいか（意図通りか）確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nfeature-xyzブランチに移動して，"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．'},
+            {description:  '\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，Pull Requestを利用して-GitHub上でマージを行ってください．\nリモートリポジトリでのマージはローカルに反映させてください．'},
+            {description:  '\nmainブランチに切り替え，プロジェクトのリリースに向けてv1.0タグを作成し\nタグをリモートリポジトリへpushしてください．'},
+        ];
+
+        getTaskReviewData.push(
+          {No: gameState.currentTaskIndex+1, taskContent: tasks[gameState.currentTaskIndex].description, who: data.name, task_count: data.task_count, chat_count: chat_count},
+        );
+        const index = gameState.currentTaskIndex + 1;
+        console.log("No:"+ index + ", taskContent:" + tasks[gameState.currentTaskIndex].description + ", who:" + data.name + ", task_count:" +  data.task_count + ", chat_count:" + chat_count);
+
+        advanceTask();0
         broadcastGameState();
         correct_flag = 0;
-        cause_flag = 1;
+        cause_flag = 0;
+        chat_count = 0;
       }
 
       // Trigger discussion phase
@@ -426,6 +443,7 @@ wss_chat.on('connection', (ws) => {
       }
 
       if(json.type === "chat"){
+        chat_count++;
         if(!json.message) return;
         //Websocket 接続中のクライアント対象にメッセージ送信
         wss_chat.clients.forEach((client) => {
