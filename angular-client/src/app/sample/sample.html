@@ -7,3 +7,6 @@
         [defaultColDef]="defaultColDef"
     ></ag-grid-angular>
 </div>
+<div *ngIf="!isBrowser">
+    <p>データを読み込み中です...</p>
+</div>

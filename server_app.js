@@ -24,10 +24,31 @@ const PORT = 8080;
 
 const args = minimist(process.argv.slice(2));
 
+
 // Create an Express app
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: 'http://127.0.0.1:5501' }));
+
+
+// 許可するオリジンのリスト
+const allowedOrigins = [
+  'http://127.0.0.1:5501',  // Live Server
+  'http://localhost:4200'   // localhost:4200
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      // 許可されたオリジンか、またはオリジンが指定されていない場合（例: Postmanからのリクエスト）
+      callback(null, true);
+    } else {
+      // 許可されていないオリジン
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+};
+
+app.use(cors(corsOptions));
 
 // Create an HTTP server using the Express app
 const server = http.createServer(app);
@@ -81,6 +102,15 @@ let voteMessage = [];
 let gameState = {
   currentTaskIndex: 0,
   players: [],
+};
+
+//振り返りダミーデータ
+const getReviewData = () => {
+  return [
+    {who: '田中', task: 'ログイン機能の修正', incident: '最初に発見'},
+    {who: '鈴木', task: 'データ連携', incident: '修正案を提案'},
+    {who: '佐藤', task: 'UIデザイン', incident: '修正案を採択'}
+  ]
 };
 
 //生成AI周り
@@ -204,6 +234,11 @@ app.post('/complete-task', (req, res) => {
   res.redirect(angularAppUrl);
 });
 
+//振り返りデータを提供するAPIエンドポイント
+app.get('/api/review-data', (req, res) => {
+    const data = getReviewData();
+    res.json(data);
+});
 
 //Game WebSocket
 wss_system.on('connection', (ws) => {

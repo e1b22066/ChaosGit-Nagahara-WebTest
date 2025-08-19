@@ -3,6 +3,7 @@ import { ColDef, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import { AgGridAngular } from 'ag-grid-angular';
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-sample',
@@ -19,22 +20,29 @@ export class Sample implements OnInit {
 
   public isBrowser: boolean = false;
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+  /*
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object) {
     if(isPlatformBrowser(this.platformId)) {
       ModuleRegistry.registerModules([AllCommunityModule]);
     }
   }
+  */
+
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private http: HttpClient
+  ) {}
 
   ngOnInit(): void {
-    // 【ここが重要です！】
+    ModuleRegistry.registerModules([ AllCommunityModule ]);
     // rowData, columnDefs, defaultColDef の代入を全てこのブロック内に移動させてください。
     this.isBrowser = isPlatformBrowser(this.platformId);
-    if (this.isBrowser) {
-      this.rowData = [
-        { who: '田中', task: 'ログイン機能の修正', incident: '最初に発見' },
-        { who: '鈴木', task: 'データ連携', incident: '修正案を提案' },
-        { who: '佐藤', task: 'UIデザイン', incident: '修正案を採択' }
-      ];
+      this.http.get<any[]>('http://localhost:8080/api/review-data').subscribe(data => {
+        this.rowData = data;
+      });
+
+      console.log('取得したデータ:', this.rowData);
       
       this.columnDefs = [
         { field: 'who', headerName: '誰が' },
@@ -49,4 +57,3 @@ export class Sample implements OnInit {
       };
     }
   }
-}
