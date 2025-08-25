@@ -24,10 +24,31 @@ const PORT = 8080;
 
 const args = minimist(process.argv.slice(2));
 
+
 // Create an Express app
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: 'http://127.0.0.1:5501' }));
+
+
+// 許可するオリジンのリスト
+const allowedOrigins = [
+  'http://127.0.0.1:5501',  // Live Server
+  'http://localhost:4200'   // localhost:4200
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      // 許可されたオリジンか、またはオリジンが指定されていない場合（例: Postmanからのリクエスト）
+      callback(null, true);
+    } else {
+      // 許可されていないオリジン
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+};
+
+app.use(cors(corsOptions));
 
 // Create an HTTP server using the Express app
 const server = http.createServer(app);
@@ -44,6 +65,18 @@ let correct_name = [];
 let discorrect_name = [];
 let correct_flag = 0;
 let cause_flag = 0;
+let chat_count = 0;
+let review_sabotage_count = 0;
+let first_correct_flag = 0;
+let firstCorrect; 
+let inventor;
+let correction;
+let corrector;
+let correctors = [];
+let usinghint = [];
+let talking;
+let start;
+let end;
 
 // 障害発生時の障害内容
 //   格納内容{
@@ -82,6 +115,12 @@ let gameState = {
   currentTaskIndex: 0,
   players: [],
 };
+
+//タスクの基本的な振り返りデータ
+let getTaskReviewData = [];
+
+//障害発生時の振り返りデータ
+let getSabotageReviewData = [];
 
 //生成AI周り
 
@@ -180,12 +219,15 @@ app.post('/check-task', (req, res) => {
     // Sabotage trigger
     if (type === 'check-push') { // Task6
       triggerSabotage('sabo-pushRemote');
+      start = process.hrtime();
       console.log('sabotage1 executed');
     } else if (type === 'check-back') {  // Task9
       triggerSabotage('sabo-addGabageFile');
+      start = process.hrtime();
       console.log('sabotage2 executed');
     } else if (type === 'check-newbranch') { // Task10
       triggerSabotage('sabo-conflict');
+      start = process.hrtime();
       console.log('sabotage3 executed');
     }
   });
@@ -204,6 +246,17 @@ app.post('/complete-task', (req, res) => {
   res.redirect(angularAppUrl);
 });
 
+//タスクの振り返りデータを提供するAPIエンドポイント
+app.get('/api/review-task-data', (req, res) => {
+    const data = getTaskReviewData;
+    res.json(data);
+});
+
+//障害発生時の振り返りデータを提供するAPIエンドポイント
+app.get('/api/review-sabotage-data', (req, res) => {
+    const data = getSabotageReviewData;
+    res.json(data);
+});
 
 //Game WebSocket
 wss_system.on('connection', (ws) => {
@@ -224,10 +277,57 @@ wss_system.on('connection', (ws) => {
 
       // Synchronize task progress
       if (data.type === 'clearTask') {
-        advanceTask();
+        const tasks = [
+            {description:  '\nターミナルにコマンドを入力して現在のディレクトリに新規のGitリポジトリを作成してください．\nここで作成したGitリポジトリをローカルリポジトリとして開発を進めます．'},
+            {description:  '\nGitで作業を記録するために，指定の名前とメールアドレスを設定してください．\nこの情報はコミット履歴に記録されます．\n名前：user\nメールアドレス：user@example.com'},
+            {description: '\nMain.javaというファイルを作成し，コミットメッセージとともにコミットを作成してください．\nコミットにはコミットメッセージが必ず必要です．\nMain.javaには何も書き込まなくても構いません．\npushはまだしないでください．'},
+            {description:  '\nGitのデフォルトブランチ名はmasterになっています。\nこのブランチをmainに変更してください.\n'},
+            {description: '\nリモートリポジトリとローカルリポジトリが連携できるように，ローカルリポジトリに\nリモートリポジトリを登録してください．\nGitHub上でリモートリポジトリのURLを選択する際に\nHTTPSではなくSSH用のアドレスを選んで登録してください．'}, // 被験者混乱（リポジトリアクセス権の問題？）
+            {description:  '\n作成したローカルリポジトリの内容をリモートリポジトリに反映させるために\nmainブランチをリモートリポジトリへpushしてください．'},
+            {description:  '\nプロジェクトに不要なファイルをコミットしないように，.gitignoreを作成してください.\nこのファイルには.classファイルを無視する設定を追加しコミットしてリモートリポジトリへ\npushしてください．'},
+            {description:  '\n"Hello World!"を表示させるMain.javaを作成し，コミットを作成してください．\npushはしないでください．'},
+            {description:  '\n過去のコミットに誤りがあった場合に備え，手戻りを行う方法を学びましょう．\nrevertコマンドを使って最新のコミットを取り消してください．'},
+            {description:  '\ngit logコマンドで今までのコミットが正しいか（意図通りか）確認してください．\nその後，新しい機能を開発するために"feature-xyz"という名前のブランチを作成してください．\nfeature-xyzブランチに移動して，"Hello Monster!"と表示されるような\nMonster.javaを作成しリモートにpushしてください．'},
+            {description:  '\nfeature-xyzブランチの作業をmainブランチに反映させるために\nPull Requestを作成してください．\nその後，Pull Requestを利用して-GitHub上でマージを行ってください．\nリモートリポジトリでのマージはローカルに反映させてください．'},
+            {description:  '\nmainブランチに切り替え，プロジェクトのリリースに向けてv1.0タグを作成し\nタグをリモートリポジトリへpushしてください．'},
+        ];
+
+        const Sabotagetasks = [
+          {description: "githubに不適切な更新があり、pushできない"},
+          {description: "gitのログに、心当たりのないコミットがある"},
+          {description: "gitHubのマージ時に、同一のファイルの更新内容が複数ある"},
+        ]
+
+        getTaskReviewData.push(
+          {No: gameState.currentTaskIndex+1, taskContent: tasks[gameState.currentTaskIndex].description, who: data.name, task_count: data.task_count, chat_count: chat_count},
+        );
+        const index = gameState.currentTaskIndex + 1;
+        console.log("No:"+ index + ", taskContent:" + tasks[gameState.currentTaskIndex].description + ", who:" + data.name + ", task_count:" +  data.task_count + ", chat_count:" + chat_count);
+
+        if(gameState.currentTaskIndex == 7 || gameState.currentTaskIndex == 10 || gameState.currentTaskIndex == 11){
+          end = process.hrtime();
+          const elapsedTime = end[0] - start[0]; // 秒単位で
+          console.log(`Task ${gameState.currentTaskIndex + 1} completed in ${elapsedTime} seconds.`);
+          getSabotageReviewData.push(
+            {No: gameState.currentTaskIndex+1, 
+             sabotageContent: Sabotagetasks[review_sabotage_count].description,
+             first: firstCorrect,       //障害発見者
+             inventor: inventor,    //修正案発案者
+             correction: correction,  //修正方法
+             corrector: corrector,   //修正者
+             correctors: correctors, //障害内容正答者
+             usinghint: usinghint,   //ヒント使用者
+             talking: talking,      //障害についての話し合い
+             time: elapsedTime,        //障害発生から修正までの時間
+            }
+          );
+          review_sabotage_count++;
+        }
+        advanceTask();0
         broadcastGameState();
         correct_flag = 0;
-        cause_flag = 1;
+        cause_flag = 0;
+        chat_count = 0;
       }
 
       // Trigger discussion phase
@@ -260,12 +360,24 @@ wss_system.on('connection', (ws) => {
         if(result === 'YES'){
           console.log("一致");
           correct_flag = 1;
+          if(first_correct_flag === 0){
+            firstCorrect = data.name;
+            firstCorrect_flag = 1;
+          }
           if(correct_count === 3){
             correct_count = 0;
+            first_correct_flag = 0;
+            firstCorrect = "";
+            correction = "";
+            inventor = "";
+            correctors = [];
+            usinghint = [];
           }
+          correctors.push(data.name);
           correct_count++;
           correct_name.push(checkReport.find(r => r.message === messages[checkReport_count - 1]));
           if(cause_flag === 1 && correct_count === 3){
+            talking = "した";
             broadcast({ 
               type: 'reportCause',
               correct_count: correct_count,
@@ -273,6 +385,7 @@ wss_system.on('connection', (ws) => {
             });
             return;
           }
+          talking = "してない";
           broadcast({ 
             type: 'clickReport',
             flag: 0,
@@ -297,6 +410,12 @@ wss_system.on('connection', (ws) => {
         cause_flag = 1;
         if(correct_count === 3){
             correct_count = 0;
+            first_correct_flag = 0;
+            firstCorrect = "";
+            correction = "";
+            inventor = "";
+            correctors = [];
+            usinghint = [];
           }
           correct_count++;
         broadcast({ 
@@ -314,6 +433,8 @@ wss_system.on('connection', (ws) => {
           {description: "コミットの履歴をよく見てください", },   // task10
           {description: "gitHubのMonster.javaをみてください", }      // task11
         ];
+
+        usinghint.push(data.name);
         
         if(gameState.currentTaskIndex < 7){
            place = placeMap[0].description;
@@ -391,6 +512,7 @@ wss_chat.on('connection', (ws) => {
       }
 
       if(json.type === "chat"){
+        chat_count++;
         if(!json.message) return;
         //Websocket 接続中のクライアント対象にメッセージ送信
         wss_chat.clients.forEach((client) => {
@@ -439,6 +561,9 @@ wss_chat.on('connection', (ws) => {
               randomIndex = Math.floor(Math.random() * playerName.length);
               if(target.name !== playerName[randomIndex]){
                 taskName = playerName[randomIndex];
+                inventor = target.name;
+                correction = target.message;
+                corrector = playerName[randomIndex];
                 decide_flag = 1;
               }
             }
