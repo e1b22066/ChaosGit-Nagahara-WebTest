@@ -23,7 +23,13 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
+    "start-server_app": "node server_app.js",
+    "start-server_term": "node server_term.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": "20.x",  
+    "npm": "10.x"   
   },
   "keywords": [],
   "author": "",
