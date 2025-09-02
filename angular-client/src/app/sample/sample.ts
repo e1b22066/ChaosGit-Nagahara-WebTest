@@ -42,7 +42,7 @@ export class Sample implements OnInit {
     ModuleRegistry.registerModules([ AllCommunityModule ]);
     // rowData, columnDefs, defaultColDef の代入を全てこのブロック内に移動させてください。
     this.isBrowser = isPlatformBrowser(this.platformId);
-      this.http.get<any[]>('http://localhost:8080/api/review-task-data').subscribe(data => {
+      this.http.get<any[]>('http://172.21.128.5:8080/api/review-task-data').subscribe(data => {
         this.rowData_task = data;
       });
 
@@ -62,7 +62,7 @@ export class Sample implements OnInit {
         sortable: true,
       };
 
-      this.http.get<any[]>('http://localhost:8080/api/review-sabotage-data').subscribe(data => {
+      this.http.get<any[]>('http://172.21.128.5:8080/api/review-sabotage-data').subscribe(data => {
         this.rowData_sabotage = data;
       });
 

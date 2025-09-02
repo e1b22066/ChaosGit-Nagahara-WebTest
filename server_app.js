@@ -242,7 +242,7 @@ app.post('/complete-task', (req, res) => {
       例： const angularAppUrl = "http://192.168.xx.xx:4200/review"
   **************************************************************
   */
-  const angularAppUrl = "http://localhost:4200/review"
+  const angularAppUrl = "http://http://localhost:5501/index.html/review"
   res.redirect(angularAppUrl);
 });
 
