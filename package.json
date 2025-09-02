@@ -1,23 +1,23 @@
 {
   "type": "module",
   "dependencies": {
-    "@gitgraph/js": "^1.4.0",
-    "@xterm/addon-fit": "^0.10.0",
-    "@xterm/xterm": "^5.5.0",
-    "axios": "^1.10.0",
-    "body-parser": "^1.20.2",
-    "child_process": "^1.0.2",
-    "cors": "^2.8.5",
-    "debug": "^4.3.7",
-    "dotenv": "^17.0.0",
-    "express": "^4.21.2",
-    "minimist": "^1.2.8",
-    "node-pty": "^1.0.0",
-    "phaser": "^3.80.1",
-    "socket.io": "^4.8.1",
-    "ws": "^8.17.1",
-    "xterm": "^5.3.0",
-    "xterm-addon-fit": "^0.8.0"
+    "@gitgraph/js": "1.4.0",
+    "@xterm/addon-fit": "0.10.0",
+    "@xterm/xterm": "5.5.0",
+    "axios": "1.10.0",
+    "body-parser": "1.20.2",
+    "child_process": "1.0.2",
+    "cors": "2.8.5",
+    "debug": "4.3.7",
+    "dotenv": "17.0.0",
+    "express": "4.21.2",
+    "minimist": "1.2.8",
+    "node-pty": "1.0.0",
+    "phaser": "3.80.1",
+    "socket.io": "4.8.1",
+    "ws": "8.17.1",
+    "xterm": "5.3.0",
+    "xterm-addon-fit": "0.8.0"
   },
   "name": "git-learning",
   "version": "1.0.0",
@@ -29,8 +29,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {
-    "node": "20.x",  
-    "npm": "10.x"   
+    "node": "20.19.2",  
+    "npm": "10.8.2"   
   },
   "keywords": [],
   "author": "",
